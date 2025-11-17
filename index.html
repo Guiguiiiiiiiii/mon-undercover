@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undercover Ultimate</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* STYLES */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; text-align: center; margin: 0; padding: 0; }
+        button { cursor: pointer; border: none; border-radius: 8px; padding: 12px 24px; font-weight: bold; font-size: 16px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: 5px; }
+        button:active { transform: scale(0.98); }
+        .btn-blue { background: #3498db; color: white; }
+        .btn-green { background: #2ecc71; color: white; }
+        .btn-red { background: #e74c3c; color: white; }
+        input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; text-align: center; }
+        input[type=text] { width: 200px; }
+
+        .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; min-height: 100vh; box-sizing: border-box; }
+        .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
+
+        .room-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .settings-box { text-align: left; width: 100%; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+
+        /* JEU */
+        .game-header { display: flex; justify-content: space-between; width: 100%; padding: 10px; background: white; border-radius: 0 0 15px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; left: 0; z-index: 10; box-sizing: border-box; }
+        .game-content { margin-top: 80px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .player-card { width: 90px; margin: 10px; position: relative; transition: 0.3s; }
+        .avatar { width: 70px; height: 70px; border-radius: 50%; background: #eee; margin: auto; border: 3px solid transparent; overflow: hidden; }
+        .avatar img { width: 100%; }
+        .bubble { background: white; border: 1px solid #ddd; padding: 5px; border-radius: 10px; font-size: 12px; margin-top: 5px; font-weight: bold; min-height: 20px; }
+        .actif .avatar { border-color: #f1c40f; transform: scale(1.1); box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
+        .mort { opacity: 0.5; filter: grayscale(100%); }
+
+        /* FIN */
+        .victory-text { color: #2ecc71; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
+        .defeat-text { color: #e74c3c; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
+        .words-reveal { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #e9ecef; }
+        .word-tag { padding: 5px 10px; border-radius: 5px; font-weight: bold; margin: 0 5px; }
+        .tag-civil { background: #e8f5e9; color: #2ecc71; }
+        .tag-imposter { background: #fce4ec; color: #e74c3c; }
+        .final-row { background: white; border: 1px solid #eee; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+        .role-badge { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; margin-left: 5px; text-transform: uppercase; font-weight: bold; }
+        .badge-Civil { background: #e8f5e9; color: #2e7d32; }
+        .badge-Undercover { background: #ffebee; color: #c62828; }
+        .badge-Mr { background: #e3f2fd; color: #1565c0; }
+
+        #controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); box-sizing: border-box; }
+        #modal-white { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-home" class="screen active">
+        <div class="card">
+            <h1>🕵️ Undercover</h1>
+            <p>Entrez votre pseudo pour jouer</p>
+            <input type="text" id="pseudo" placeholder="Pseudo..." />
+            <br><br>
+            <button class="btn-blue" onclick="showCreate()">Créer une partie</button>
+            <button class="btn-green" onclick="showBrowser()">Rejoindre une partie</button>
+        </div>
+    </div>
+
+    <div id="screen-browser" class="screen">
+        <div class="card">
+            <h2>Salons disponibles</h2>
+            <div id="room-list">Chargement...</div>
+            <br>
+            <button class="btn-red" onclick="goHome()">Retour</button>
+        </div>
+    </div>
+
+    <div id="screen-lobby" class="screen">
+        <div class="card">
+            <h2>Salle : <span id="room-code-display" style="color: #3498db;"></span></h2>
+            
+            <div class="settings-box">
+                <div class="setting-row">
+                    <span>📚 Liste de mots</span>
+                    <select id="opt-category" onchange="updateSettings()" disabled>
+                        <option value="Général">Général</option>
+                        <option value="Animaux">Animaux</option>
+                        <option value="Lieux">Lieux</option>
+                        <option value="Difficile">Difficile</option>
+                    </select>
+                </div>
+
+                <div class="setting-row"><span>🕵️ Undercover</span> <input type="checkbox" id="opt-undercover" onchange="updateSettings()" disabled></div>
+                <div class="setting-row"><span>🎩 Mr. White</span> <input type="checkbox" id="opt-white" onchange="updateSettings()" disabled></div>
+                <div class="setting-row"><span>🚀 White Start</span> <input type="checkbox" id="opt-white-start" onchange="updateSettings()" disabled></div>
+                <div class="setting-row"><span>⏱️ Parole (s)</span> <input type="number" id="opt-time-word" style="width: 60px;" onchange="updateSettings()" disabled></div>
+                <div class="setting-row"><span>⏳ Vote (s)</span> <input type="number" id="opt-time-vote" style="width: 60px;" onchange="updateSettings()" disabled></div>
+            </div>
+            
+            <div id="lobby-players" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px;"></div>
+            
+            <br>
+            <div id="host-controls" style="display: none;">
+                <button class="btn-green" onclick="lancerPartie()">LANCER LA PARTIE</button>
+            </div>
+            <div id="guest-msg">En attente de l'hôte...</div>
+            <br>
+            <button class="btn-red" onclick="quitRoom()">Quitter le salon</button>
+        </div>
+    </div>
+
+    <div id="screen-game" class="screen" style="justify-content: flex-start;">
+        <div class="game-header">
+            <div style="text-align: left;">
+                <span id="my-role" style="font-weight: bold;">Rôle caché</span><br>
+                <span id="my-word" style="color: #e74c3c; font-weight: bold;">???</span>
+            </div>
+            <div style="font-size: 24px; font-weight: bold; color: #333;" id="timer-display">--</div>
+        </div>
+        <div id="timer-bar" style="height: 4px; background: #e74c3c; width: 0%; position: fixed; top: 75px; left:0;"></div>
+        <div class="game-content">
+            <div id="game-plateau" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+        </div>
+        <div id="controls" style="display: none;">
+            <h3 id="instruction" style="margin-top: 0;">...</h3>
+            <div id="input-area" style="display: none;">
+                <input type="text" id="word-input" placeholder="Votre mot..." />
+                <button class="btn-blue" onclick="sendWord()">Envoyer</button>
+            </div>
+            <div id="zone-vote" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;"></div>
+        </div>
+    </div>
+
+    <div id="screen-end" class="screen">
+        <div class="card">
+            <div id="end-header">
+                <h1>Partie Terminée !</h1>
+                <div id="result-title" class="victory-text">VICTOIRE</div>
+            </div>
+            <div class="words-reveal">
+                Les mots étaient : <br>
+                <span class="word-tag tag-civil" id="end-mot-civil">Civil</span>
+                <span class="word-tag tag-imposter" id="end-mot-under">Imposteur</span>
+            </div>
+            <h3>État Final</h3>
+            <div id="final-list" style="width: 100%; margin-top: 20px;"></div>
+            <br>
+            <button class="btn-blue" onclick="backToLobby()">Retour au Salon</button>
+        </div>
+    </div>
+
+    <div id="modal-white">
+        <h1 style="color: #f1c40f;">DERNIÈRE CHANCE !</h1>
+        <p>Tu es Mr. White. Devine le mot :</p>
+        <input type="text" id="white-input" placeholder="Mot..." style="font-size: 20px;">
+        <br><br>
+        <button class="btn-red" onclick="guessWhite()">TENTER</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let myId = "", isHost = false, myRole = "";
+
+        // NAVIGATION
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function goHome() { showScreen('screen-home'); }
+        function showCreate() {
+            const pseudo = document.getElementById('pseudo').value;
+            if(!pseudo) return alert("Choisis un pseudo !");
+            socket.emit('creer_room', { pseudo });
+        }
+        function showBrowser() {
+            const pseudo = document.getElementById('pseudo').value;
+            if(!pseudo) return alert("Choisis un pseudo !");
+            showScreen('screen-browser');
+        }
+        function quitRoom() {
+            if(confirm("Veux-tu vraiment quitter ce salon ?")) {
+                socket.emit('quitter_room');
+                goHome();
+                isHost = false;
+                document.getElementById('lobby-players').innerHTML = "";
+            }
+        }
+
+        // SOCKET
+        socket.on('connect', () => { myId = socket.id; });
+
+        // Browser
+        socket.on('update_room_list', (rooms) => {
+            const list = document.getElementById('room-list');
+            list.innerHTML = "";
+            if(rooms.length === 0) list.innerHTML = "<p>Aucune partie.</p>";
+            rooms.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'room-item';
+                div.innerHTML = `<span>Salle <b>${r.code}</b> (${r.nb})</span> <button class="btn-blue" onclick="joinRoom('${r.code}')">Rejoindre</button>`;
+                list.appendChild(div);
+            });
+        });
+        function joinRoom(code) {
+            const pseudo = document.getElementById('pseudo').value;
+            socket.emit('rejoindre_room', { pseudo, code });
+        }
+
+        // Lobby
+        socket.on('room_rejoined', (data) => {
+            isHost = data.isHost;
+            document.getElementById('room-code-display').innerText = data.code;
+            showScreen('screen-lobby');
+            updateLobbyUI(data.settings);
+        });
+        socket.on('tu_es_host', () => { isHost = true; updateLobbyUI(currentSettings); });
+        socket.on('update_plateau', (data) => {
+            renderPlayers(data.joueurs, 'lobby-players');
+            renderPlayers(data.joueurs, 'game-plateau');
+        });
+
+        // Settings
+        let currentSettings = {};
+        socket.on('update_settings_view', (settings) => {
+            currentSettings = settings;
+            // Mise à jour des valeurs
+            document.getElementById('opt-category').value = settings.category; // New
+            document.getElementById('opt-undercover').checked = settings.hasUndercover;
+            document.getElementById('opt-white').checked = settings.hasWhite;
+            document.getElementById('opt-white-start').checked = settings.whiteCanStart;
+            document.getElementById('opt-time-word').value = settings.timeWord;
+            document.getElementById('opt-time-vote').value = settings.timeVote;
+            
+            document.getElementById('opt-white-start').disabled = !isHost || !settings.hasWhite;
+        });
+
+        function updateSettings() {
+            if(!isHost) return;
+            const settings = {
+                category: document.getElementById('opt-category').value, // New
+                hasUndercover: document.getElementById('opt-undercover').checked,
+                hasWhite: document.getElementById('opt-white').checked,
+                whiteCanStart: document.getElementById('opt-white-start').checked,
+                timeWord: parseInt(document.getElementById('opt-time-word').value),
+                timeVote: parseInt(document.getElementById('opt-time-vote').value)
+            };
+            socket.emit('update_settings', settings);
+        }
+
+        function updateLobbyUI(settings) {
+            // Gérer l'activation des inputs
+            const ids = ['opt-category', 'opt-undercover', 'opt-white', 'opt-time-word', 'opt-time-vote'];
+            ids.forEach(id => document.getElementById(id).disabled = !isHost);
+            
+            if(isHost && settings.hasWhite) document.getElementById('opt-white-start').disabled = false;
+            else document.getElementById('opt-white-start').disabled = true;
+
+            document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
+            document.getElementById('guest-msg').style.display = isHost ? 'none' : 'block';
+            if(settings) socket.emit('update_settings_view', settings);
+        }
+        function lancerPartie() { socket.emit('lancer_partie'); }
+
+        // JEU (Gameplay)
+        socket.on('debut_jeu', (data) => {
+            showScreen('screen-game');
+            myRole = data.role;
+            document.getElementById('my-role').innerText = data.role;
+            let mot = data.mot || "Trouve le mot !";
+            if(data.role === 'Mr. White') mot = "🕵️ ???";
+            document.getElementById('my-word').innerText = mot;
+        });
+        socket.on('nouveau_tour', (data) => {
+            resetControls();
+            document.getElementById('controls').style.display = 'block';
+            highlightPlayer(data.id);
+            startTimer(data.duree);
+            if(data.id === myId) {
+                document.getElementById('instruction').innerText = "C'EST À TOI !";
+                document.getElementById('input-area').style.display = 'block';
+                document.getElementById('word-input').focus();
+            } else {
+                document.getElementById('instruction').innerText = `Tour de ${data.pseudo}`;
+            }
+        });
+        function sendWord() {
+            const val = document.getElementById('word-input').value;
+            if(val) { socket.emit('envoyer_mot_tour', val); document.getElementById('word-input').value = ""; }
+        }
+        socket.on('phase_vote', (data) => {
+            resetControls();
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('instruction').innerText = "VOTEZ !";
+            startTimer(data.duree);
+            const zone = document.getElementById('zone-vote');
+            zone.innerHTML = "";
+            data.vivants.forEach(p => {
+                if(p.id !== myId) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-red';
+                    btn.innerText = p.pseudo;
+                    btn.onclick = () => {
+                        socket.emit('vote_contre', p.id);
+                        zone.innerHTML = "<p>A voté !</p>";
+                    };
+                    zone.appendChild(btn);
+                }
+            });
+        });
+
+        // FIN
+        socket.on('game_over', (data) => {
+            showScreen('screen-end');
+            const title = document.getElementById('result-title');
+            let victory = false;
+            if (data.gagnant === 'Civils' && myRole === 'Civil') victory = true;
+            else if (data.gagnant === 'Imposteurs' && myRole !== 'Civil') victory = true;
+            else if (data.gagnant === 'Mr. White' && myRole === 'Mr. White') victory = true;
+
+            if (victory) { title.innerText = "VICTOIRE ! 🎉"; title.className = "victory-text"; } 
+            else { title.innerText = "DÉFAITE... 💀"; title.className = "defeat-text"; }
+            title.innerHTML += `<br><span style="font-size: 1rem; color: #666;">(Les ${data.gagnant} gagnent)</span>`;
+
+            document.getElementById('end-mot-civil').innerText = data.motCivil + " (Civil)";
+            document.getElementById('end-mot-under').innerText = data.motUndercover + " (Undercover)";
+
+            const list = document.getElementById('final-list');
+            list.innerHTML = "";
+            data.joueurs.forEach(p => {
+                const row = document.createElement('div');
+                row.className = "final-row";
+                let badgeClass = "badge-Civil";
+                if(p.role === 'Undercover') badgeClass = "badge-Undercover";
+                if(p.role === 'Mr. White') badgeClass = "badge-Mr";
+                const statut = p.vivant ? "" : '<span style="color:red; margin-left:5px;">(Éliminé)</span>';
+                const motAffiché = p.mot ? `<br><small>Mot : ${p.mot}</small>` : "";
+                row.innerHTML = `<div><strong>${p.pseudo}</strong> <span class="role-badge ${badgeClass}">${p.role}</span> ${statut}${motAffiché}</div>`;
+                list.appendChild(row);
+            });
+        });
+        function backToLobby() { showScreen('screen-lobby'); document.getElementById('game-plateau').innerHTML = ""; }
+
+        // UTILS
+        let timerInterval;
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            const display = document.getElementById('timer-display');
+            const bar = document.getElementById('timer-bar');
+            let left = seconds;
+            display.innerText = left;
+            bar.style.width = '100%';
+            bar.style.transition = `width ${seconds}s linear`;
+            setTimeout(() => { bar.style.width = '0%'; }, 50);
+            timerInterval = setInterval(() => {
+                left--;
+                display.innerText = left;
+                if(left <= 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+        function renderPlayers(list, containerId) {
+            const div = document.getElementById(containerId);
+            div.innerHTML = "";
+            list.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `player-card ${p.vivant ? '' : 'mort'}`;
+                card.id = `card-${p.id}`;
+                const avatarUrl = `https://ui-avatars.com/api/?name=${p.pseudo}&background=${p.avatarColor}&color=fff&size=128`;
+                card.innerHTML = `<div class="avatar"><img src="${avatarUrl}"></div><div class="bubble">${p.pseudo}</div><div style="font-size:11px; margin-top:2px;">${p.motEcrit || "..."}</div>`;
+                div.appendChild(card);
+            });
+        }
+        function highlightPlayer(id) {
+            document.querySelectorAll('.player-card').forEach(c => c.classList.remove('actif'));
+            const c = document.getElementById(`card-${id}`);
+            if(c) c.classList.add('actif');
+        }
+        function resetControls() {
+            document.getElementById('input-area').style.display = 'none';
+            document.getElementById('zone-vote').innerHTML = "";
+        }
+
+        socket.on('mr_white_chance', (data) => {
+            document.getElementById('controls').style.display = 'none';
+            if(data.id === myId) document.getElementById('modal-white').style.display = 'flex';
+        });
+        function guessWhite() {
+            const val = document.getElementById('white-input').value;
+            socket.emit('guess_white', val);
+            document.getElementById('modal-white').style.display = 'none';
+        }
+
+        socket.on('info', msg => alert(msg));
+        socket.on('joueur_elimine', data => alert(`${data.pseudo} éliminé (${data.role})`));
+        socket.on('erreur', msg => alert(msg));
+    </script>
+</body>
+</html>
