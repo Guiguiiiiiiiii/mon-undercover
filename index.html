@@ -21,6 +21,9 @@
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
 
         .room-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .room-info { text-align: left; }
+        .room-players-list { font-size: 12px; color: #777; margin-top: 4px; }
+        
         .settings-box { text-align: left; width: 100%; }
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
 
@@ -188,7 +191,7 @@
         // SOCKET
         socket.on('connect', () => { myId = socket.id; });
 
-        // Browser
+        // Browser - MODIFIÉ POUR AFFICHER LES JOUEURS
         socket.on('update_room_list', (rooms) => {
             const list = document.getElementById('room-list');
             list.innerHTML = "";
@@ -196,7 +199,16 @@
             rooms.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'room-item';
-                div.innerHTML = `<span>Salle <b>${r.code}</b> (${r.nb})</span> <button class="btn-blue" onclick="joinRoom('${r.code}')">Rejoindre</button>`;
+                // On gère l'affichage des joueurs
+                const playersList = r.players.length > 0 ? r.players.join(', ') : "Vide";
+                
+                div.innerHTML = `
+                    <div class="room-info">
+                        <div style="font-weight:bold;">Salle ${r.code} (${r.nb})</div>
+                        <div class="room-players-list">Joueurs: ${playersList}</div>
+                    </div>
+                    <button class="btn-blue" onclick="joinRoom('${r.code}')">Rejoindre</button>
+                `;
                 list.appendChild(div);
             });
         });
@@ -256,19 +268,17 @@
         }
         function lancerPartie() { socket.emit('lancer_partie'); }
 
-        // JEU (Gameplay) - MODIFIÉ POUR CACHER LE RÔLE
+        // JEU (Gameplay)
         socket.on('debut_jeu', (data) => {
             showScreen('screen-game');
-            myRole = data.role; // On stocke le vrai rôle pour la fin de partie
-
-            // LOGIQUE D'AFFICHAGE MASQUÉ
+            myRole = data.role;
+            
+            // RÔLE CACHÉ
             if (data.role === 'Mr. White') {
-                // Mr White doit savoir qu'il est Mr White
                 document.getElementById('my-role').innerText = "Tu es : Mr. White 🎩";
                 document.getElementById('my-word').innerText = "🕵️ ???";
                 document.getElementById('my-role').style.color = "#f1c40f";
             } else {
-                // Civils et Undercover ne voient que "Mot Secret"
                 document.getElementById('my-role').innerText = "Ton mot secret :";
                 document.getElementById('my-word').innerText = data.mot;
                 document.getElementById('my-role').style.color = "#333";
@@ -318,8 +328,6 @@
             showScreen('screen-end');
             const title = document.getElementById('result-title');
             let victory = false;
-            
-            // Vérification de la victoire avec myRole (qui contient la vraie info)
             if (data.gagnant === 'Civils' && myRole === 'Civil') victory = true;
             else if (data.gagnant === 'Imposteurs' && myRole !== 'Civil') victory = true;
             else if (data.gagnant === 'Mr. White' && myRole === 'Mr. White') victory = true;
