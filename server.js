@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// 🔽 C'EST ICI QUE TU DÉFINIS TES LISTES DE MOTS 🔽
+// 🔽 LISTES DE MOTS 🔽
 // ============================================================
 const listesDeMots = {
     "Général": [
@@ -45,7 +45,7 @@ io.on('connection', (socket) => {
   
   socket.emit('update_room_list', getPublicRooms());
 
-  // Créer une salle
+  // Créer
   socket.on('creer_room', (infos) => {
     const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
     
@@ -54,8 +54,9 @@ io.on('connection', (socket) => {
         hostId: socket.id,
         joueurs: [],
         status: 'waiting', 
+        lastAction: Date.now(), // Pour le nettoyage auto
         settings: {
-            category: "Général", // Catégorie par défaut
+            category: "Général",
             hasUndercover: true,
             hasWhite: true,
             whiteCanStart: false,
@@ -82,20 +83,16 @@ io.on('connection', (socket) => {
     gererDepart(socket);
   });
 
-  // Update Settings
+  // Settings
   socket.on('update_settings', (newSettings) => {
     const j = joueurs[socket.id];
     if (!j || !rooms[j.room]) return;
     const room = rooms[j.room];
     
-    // Sécurités
-    if (!newSettings.hasUndercover && !newSettings.hasWhite) {
-        newSettings.hasUndercover = true; 
-    }
-    // Vérifier que la catégorie existe, sinon remettre Général
-    if (!listesDeMots[newSettings.category]) {
-        newSettings.category = "Général";
-    }
+    room.lastAction = Date.now(); // Activité détectée
+
+    if (!newSettings.hasUndercover && !newSettings.hasWhite) newSettings.hasUndercover = true; 
+    if (!listesDeMots[newSettings.category]) newSettings.category = "Général";
 
     if (room.hostId === socket.id) {
         room.settings = { ...room.settings, ...newSettings };
@@ -103,7 +100,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // LANCER LA PARTIE
+  // LANCER
   socket.on('lancer_partie', () => {
     const j = joueurs[socket.id];
     const room = rooms[j.room];
@@ -114,34 +111,25 @@ io.on('connection', (socket) => {
         return;
     }
 
+    room.lastAction = Date.now();
     room.status = 'playing';
-    room.gameData = {
-        indexJoueurActuel: 0,
-        votes: {},
-        phase: 'tour',
-        timer: null
-    };
+    room.gameData = { indexJoueurActuel: 0, votes: {}, phase: 'tour', timer: null };
 
-    // --- CHOIX DES MOTS SELON LA LISTE CHOISIE ---
     const cat = room.settings.category;
     const listeChoisie = listesDeMots[cat] || listesDeMots["Général"];
 
     let idx1 = Math.floor(Math.random() * listeChoisie.length);
     let idx2 = Math.floor(Math.random() * listeChoisie.length);
-    // S'assurer que les mots sont différents
     while (idx1 === idx2) idx2 = Math.floor(Math.random() * listeChoisie.length);
     
     const motCivil = listeChoisie[idx1];
     const motUndercover = listeChoisie[idx2];
-    
     room.gameData.motCivil = motCivil;
-    // ---------------------------------------------
 
     room.joueurs.forEach(p => { 
         p.role = 'Civil'; p.motSecret = motCivil; p.vivant = true; p.motEcrit = ""; 
     });
 
-    // Rôles
     let availableIndexes = [...Array(room.joueurs.length).keys()];
     availableIndexes.sort(() => Math.random() - 0.5);
 
@@ -156,10 +144,8 @@ io.on('connection', (socket) => {
         room.joueurs[idx].motSecret = null;
     }
 
-    // Ordre de passage
     room.joueurs.sort(() => Math.random() - 0.5);
 
-    // Contrainte White Start
     if (room.settings.hasWhite && !room.settings.whiteCanStart) {
         while (room.joueurs[0].role === 'Mr. White') {
             const targetIndex = Math.floor(Math.random() * (room.joueurs.length - 1)) + 1;
@@ -175,11 +161,13 @@ io.on('connection', (socket) => {
     lancerTour(room);
   });
 
-  // --- JEU ---
+  // JEU
   socket.on('envoyer_mot_tour', (mot) => {
     const j = joueurs[socket.id];
     const room = rooms[j.room];
     if (!room || room.gameData.phase !== 'tour') return;
+    
+    room.lastAction = Date.now();
 
     const currentP = room.joueurs[room.gameData.indexJoueurActuel];
     if (currentP.id === socket.id) {
@@ -195,6 +183,7 @@ io.on('connection', (socket) => {
     const room = rooms[j.room];
     if(!room || room.gameData.phase !== 'vote') return;
 
+    room.lastAction = Date.now();
     room.gameData.votes[socket.id] = idCible;
     const vivants = room.joueurs.filter(p => p.vivant);
     if (Object.keys(room.gameData.votes).length === vivants.length) {
@@ -208,6 +197,7 @@ io.on('connection', (socket) => {
     const room = rooms[j.room];
     if (!room || room.gameData.phase !== 'white_guess') return;
 
+    room.lastAction = Date.now();
     if (mot.trim().toLowerCase() === room.gameData.motCivil.toLowerCase()) {
         finirPartie(room, 'Mr. White');
     } else {
@@ -252,6 +242,9 @@ function rejoindreLaSalle(socket, pseudo, code) {
         avatarColor: Math.floor(Math.random()*16777215).toString(16)
     };
     room.joueurs.push(newPlayer);
+    
+    room.lastAction = Date.now(); // Mise à jour activité
+    
     joueurs[socket.id] = { room: code, pseudo: pseudo };
     socket.emit('room_rejoined', { code: code, isHost: (room.hostId === socket.id), settings: room.settings });
     io.emit('update_room_list', getPublicRooms());
@@ -346,6 +339,7 @@ function finirPartie(room, equipeGagnante) {
     io.to(room.code).emit('game_over', resume);
     room.status = 'waiting';
     room.gameData = {};
+    room.lastAction = Date.now(); // On reset le timer d'inactivité
     io.emit('update_room_list', getPublicRooms());
 }
 
@@ -358,15 +352,43 @@ function nextRound(room) {
 }
 
 function envoyerEtatRoom(room) { io.to(room.code).emit('update_plateau', { joueurs: room.joueurs }); }
+
+// --- MODIFICATION ICI POUR AFFICHER LES JOUEURS ---
 function getPublicRooms() {
     const list = [];
     for (const code in rooms) {
         if (rooms[code].status === 'waiting') {
-            list.push({ code: code, nb: rooms[code].joueurs.length, hasWhite: rooms[code].settings.hasWhite });
+            // On envoie aussi la liste des pseudos
+            const pseudos = rooms[code].joueurs.map(j => j.pseudo);
+            list.push({ 
+                code: code, 
+                nb: rooms[code].joueurs.length, 
+                players: pseudos, // Ajout de la liste
+                hasWhite: rooms[code].settings.hasWhite 
+            });
         }
     }
     return list;
 }
+
+// --- NETTOYAGE AUTOMATIQUE DES SALLES ---
+setInterval(() => {
+    const now = Date.now();
+    const timeout = 10 * 60 * 1000; // 10 minutes
+    let changed = false;
+
+    for (const code in rooms) {
+        if (now - rooms[code].lastAction > timeout) {
+            console.log(`Suppression de la salle inactive : ${code}`);
+            delete rooms[code];
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        io.emit('update_room_list', getPublicRooms());
+    }
+}, 60 * 1000); // Vérifie toutes les minutes
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
