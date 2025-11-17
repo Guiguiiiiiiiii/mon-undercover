@@ -222,21 +222,19 @@
         let currentSettings = {};
         socket.on('update_settings_view', (settings) => {
             currentSettings = settings;
-            // Mise à jour des valeurs
-            document.getElementById('opt-category').value = settings.category; // New
+            document.getElementById('opt-category').value = settings.category;
             document.getElementById('opt-undercover').checked = settings.hasUndercover;
             document.getElementById('opt-white').checked = settings.hasWhite;
             document.getElementById('opt-white-start').checked = settings.whiteCanStart;
             document.getElementById('opt-time-word').value = settings.timeWord;
             document.getElementById('opt-time-vote').value = settings.timeVote;
-            
             document.getElementById('opt-white-start').disabled = !isHost || !settings.hasWhite;
         });
 
         function updateSettings() {
             if(!isHost) return;
             const settings = {
-                category: document.getElementById('opt-category').value, // New
+                category: document.getElementById('opt-category').value,
                 hasUndercover: document.getElementById('opt-undercover').checked,
                 hasWhite: document.getElementById('opt-white').checked,
                 whiteCanStart: document.getElementById('opt-white-start').checked,
@@ -247,10 +245,8 @@
         }
 
         function updateLobbyUI(settings) {
-            // Gérer l'activation des inputs
             const ids = ['opt-category', 'opt-undercover', 'opt-white', 'opt-time-word', 'opt-time-vote'];
             ids.forEach(id => document.getElementById(id).disabled = !isHost);
-            
             if(isHost && settings.hasWhite) document.getElementById('opt-white-start').disabled = false;
             else document.getElementById('opt-white-start').disabled = true;
 
@@ -260,15 +256,25 @@
         }
         function lancerPartie() { socket.emit('lancer_partie'); }
 
-        // JEU (Gameplay)
+        // JEU (Gameplay) - MODIFIÉ POUR CACHER LE RÔLE
         socket.on('debut_jeu', (data) => {
             showScreen('screen-game');
-            myRole = data.role;
-            document.getElementById('my-role').innerText = data.role;
-            let mot = data.mot || "Trouve le mot !";
-            if(data.role === 'Mr. White') mot = "🕵️ ???";
-            document.getElementById('my-word').innerText = mot;
+            myRole = data.role; // On stocke le vrai rôle pour la fin de partie
+
+            // LOGIQUE D'AFFICHAGE MASQUÉ
+            if (data.role === 'Mr. White') {
+                // Mr White doit savoir qu'il est Mr White
+                document.getElementById('my-role').innerText = "Tu es : Mr. White 🎩";
+                document.getElementById('my-word').innerText = "🕵️ ???";
+                document.getElementById('my-role').style.color = "#f1c40f";
+            } else {
+                // Civils et Undercover ne voient que "Mot Secret"
+                document.getElementById('my-role').innerText = "Ton mot secret :";
+                document.getElementById('my-word').innerText = data.mot;
+                document.getElementById('my-role').style.color = "#333";
+            }
         });
+
         socket.on('nouveau_tour', (data) => {
             resetControls();
             document.getElementById('controls').style.display = 'block';
@@ -312,6 +318,8 @@
             showScreen('screen-end');
             const title = document.getElementById('result-title');
             let victory = false;
+            
+            // Vérification de la victoire avec myRole (qui contient la vraie info)
             if (data.gagnant === 'Civils' && myRole === 'Civil') victory = true;
             else if (data.gagnant === 'Imposteurs' && myRole !== 'Civil') victory = true;
             else if (data.gagnant === 'Mr. White' && myRole === 'Mr. White') victory = true;
@@ -393,5 +401,4 @@
         socket.on('erreur', msg => alert(msg));
     </script>
 </body>
-
 </html>
