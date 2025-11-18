@@ -6,7 +6,7 @@
     <title>Undercover Ultimate</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* STYLES */
+        /* STYLES IDENTIQUES */
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; text-align: center; margin: 0; padding: 0; }
         button { cursor: pointer; border: none; border-radius: 8px; padding: 12px 24px; font-weight: bold; font-size: 16px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: 5px; }
         button:active { transform: scale(0.98); }
@@ -15,19 +15,14 @@
         .btn-red { background: #e74c3c; color: white; }
         input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; text-align: center; }
         input[type=text] { width: 200px; }
-
         .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; min-height: 100vh; box-sizing: border-box; }
         .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
-
         .room-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
         .room-info { text-align: left; }
         .room-players-list { font-size: 12px; color: #777; margin-top: 4px; }
-        
         .settings-box { text-align: left; width: 100%; }
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-
-        /* JEU */
         .game-header { display: flex; justify-content: space-between; width: 100%; padding: 10px; background: white; border-radius: 0 0 15px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; left: 0; z-index: 10; box-sizing: border-box; }
         .game-content { margin-top: 80px; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .player-card { width: 90px; margin: 10px; position: relative; transition: 0.3s; }
@@ -36,8 +31,6 @@
         .bubble { background: white; border: 1px solid #ddd; padding: 5px; border-radius: 10px; font-size: 12px; margin-top: 5px; font-weight: bold; min-height: 20px; }
         .actif .avatar { border-color: #f1c40f; transform: scale(1.1); box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
         .mort { opacity: 0.5; filter: grayscale(100%); }
-
-        /* FIN */
         .victory-text { color: #2ecc71; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
         .defeat-text { color: #e74c3c; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
         .words-reveal { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #e9ecef; }
@@ -49,7 +42,6 @@
         .badge-Civil { background: #e8f5e9; color: #2e7d32; }
         .badge-Undercover { background: #ffebee; color: #c62828; }
         .badge-Mr { background: #e3f2fd; color: #1565c0; }
-
         #controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); box-sizing: border-box; }
         #modal-white { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: white; }
     </style>
@@ -79,27 +71,23 @@
     <div id="screen-lobby" class="screen">
         <div class="card">
             <h2>Salle : <span id="room-code-display" style="color: #3498db;"></span></h2>
-            
             <div class="settings-box">
                 <div class="setting-row">
                     <span>📚 Liste de mots</span>
                     <select id="opt-category" onchange="updateSettings()" disabled>
-                        <option value="Général">Général</option>
-                        <option value="Animaux">Animaux</option>
-                        <option value="Lieux">Lieux</option>
+                        <option value="Naruto">Naruto</option>
+                        <option value="AoT">Attack on Titan</option>
+                        <option value="Demon Slayer">Demon Slayer</option>
                         <option value="Difficile">Difficile</option>
                     </select>
                 </div>
-
                 <div class="setting-row"><span>🕵️ Undercover</span> <input type="checkbox" id="opt-undercover" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>🎩 Mr. White</span> <input type="checkbox" id="opt-white" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>🚀 White Start</span> <input type="checkbox" id="opt-white-start" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>⏱️ Parole (s)</span> <input type="number" id="opt-time-word" style="width: 60px;" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>⏳ Vote (s)</span> <input type="number" id="opt-time-vote" style="width: 60px;" onchange="updateSettings()" disabled></div>
             </div>
-            
             <div id="lobby-players" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px;"></div>
-            
             <br>
             <div id="host-controls" style="display: none;">
                 <button class="btn-green" onclick="lancerPartie()">LANCER LA PARTIE</button>
@@ -163,7 +151,6 @@
         const socket = io();
         let myId = "", isHost = false, myRole = "";
 
-        // NAVIGATION
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -188,10 +175,8 @@
             }
         }
 
-        // SOCKET
         socket.on('connect', () => { myId = socket.id; });
 
-        // Browser - MODIFIÉ POUR AFFICHER LES JOUEURS
         socket.on('update_room_list', (rooms) => {
             const list = document.getElementById('room-list');
             list.innerHTML = "";
@@ -199,9 +184,7 @@
             rooms.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'room-item';
-                // On gère l'affichage des joueurs
                 const playersList = r.players.length > 0 ? r.players.join(', ') : "Vide";
-                
                 div.innerHTML = `
                     <div class="room-info">
                         <div style="font-weight:bold;">Salle ${r.code} (${r.nb})</div>
@@ -217,7 +200,6 @@
             socket.emit('rejoindre_room', { pseudo, code });
         }
 
-        // Lobby
         socket.on('room_rejoined', (data) => {
             isHost = data.isHost;
             document.getElementById('room-code-display').innerText = data.code;
@@ -230,7 +212,6 @@
             renderPlayers(data.joueurs, 'game-plateau');
         });
 
-        // Settings
         let currentSettings = {};
         socket.on('update_settings_view', (settings) => {
             currentSettings = settings;
@@ -242,7 +223,6 @@
             document.getElementById('opt-time-vote').value = settings.timeVote;
             document.getElementById('opt-white-start').disabled = !isHost || !settings.hasWhite;
         });
-
         function updateSettings() {
             if(!isHost) return;
             const settings = {
@@ -255,25 +235,20 @@
             };
             socket.emit('update_settings', settings);
         }
-
         function updateLobbyUI(settings) {
             const ids = ['opt-category', 'opt-undercover', 'opt-white', 'opt-time-word', 'opt-time-vote'];
             ids.forEach(id => document.getElementById(id).disabled = !isHost);
             if(isHost && settings.hasWhite) document.getElementById('opt-white-start').disabled = false;
             else document.getElementById('opt-white-start').disabled = true;
-
             document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
             document.getElementById('guest-msg').style.display = isHost ? 'none' : 'block';
             if(settings) socket.emit('update_settings_view', settings);
         }
         function lancerPartie() { socket.emit('lancer_partie'); }
 
-        // JEU (Gameplay)
         socket.on('debut_jeu', (data) => {
             showScreen('screen-game');
             myRole = data.role;
-            
-            // RÔLE CACHÉ
             if (data.role === 'Mr. White') {
                 document.getElementById('my-role').innerText = "Tu es : Mr. White 🎩";
                 document.getElementById('my-word').innerText = "🕵️ ???";
@@ -323,7 +298,6 @@
             });
         });
 
-        // FIN
         socket.on('game_over', (data) => {
             showScreen('screen-end');
             const title = document.getElementById('result-title');
@@ -355,7 +329,6 @@
         });
         function backToLobby() { showScreen('screen-lobby'); document.getElementById('game-plateau').innerHTML = ""; }
 
-        // UTILS
         let timerInterval;
         function startTimer(seconds) {
             clearInterval(timerInterval);
@@ -363,15 +336,20 @@
             const bar = document.getElementById('timer-bar');
             let left = seconds;
             display.innerText = left;
+            bar.style.transition = 'none';
             bar.style.width = '100%';
-            bar.style.transition = `width ${seconds}s linear`;
-            setTimeout(() => { bar.style.width = '0%'; }, 50);
+            void bar.offsetWidth; 
+            setTimeout(() => {
+                bar.style.transition = `width ${seconds}s linear`;
+                bar.style.width = '0%';
+            }, 10);
             timerInterval = setInterval(() => {
                 left--;
                 display.innerText = left;
                 if(left <= 0) clearInterval(timerInterval);
             }, 1000);
         }
+
         function renderPlayers(list, containerId) {
             const div = document.getElementById(containerId);
             div.innerHTML = "";
