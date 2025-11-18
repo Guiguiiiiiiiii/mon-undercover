@@ -15,21 +15,11 @@ app.get('/', (req, res) => {
 // ============================================================
 const listesDeMots = {
     "Général": [
-        "Banane", "Fraise", "Kiwi", "Pomme", "Ananas", "Pêche", "Melon",
-        "Voiture", "Camion", "Moto", "Vélo", "Trotinette", "Bus",
-        "Piano", "Guitare", "Violon", "Trompette", "Flute", "Batterie",
-        "Pain", "Croissant", "Brioche", "Baguette", "Sandwich"
-    ],
+        "Naruto Uzumaki", "Sasuke Uchiha", "Sakura Haruno", "Kakashi Hatake", "Hinata Hyuga", "Neji Hyuga", "Rock Lee", "Tenten", "Gaara", "Kankuro", "Temari", "Shikamaru Nara", "Choji Akimichi", "Ino Yamanaka", "Sai", "Yamato", "Jiraiya", "Tsunade", "Orochimaru", "Itachi Uchiha", "Kisame Hoshigaki", "Deidara", "Sasori", "Hidan","Kakuzu", "Pain", "Konan", "Nagato", "Obito Uchiha", "Madara Uchiha", "Minato Namikaze", "Kushina Uzumaki", "Tobirama Senju", "Hashirama Senju", "Hiruzen Sarutobi", "Danzo Shimura", "Killer Bee", "Kiba Inuzuka", "Akamaru", "Shino Aburame", "Might Guy", "Iruka Umino", "Konohamaru Sarutobi", "Hanabi Hyuga", "Karin", "Suigetsu Hozuki", "Jugo", "Kabuto Yakushi","Kaguya", "Hanzo", "Zabuza", "Haku"],
     "Animaux": [
-        "Chien", "Chat", "Lion", "Tigre", "Loup", "Ours", "Renard",
-        "Aigle", "Pigeon", "Mouette", "Perroquet",
-        "Requin", "Dauphin", "Baleine", "Poisson rouge"
-    ],
+        "Eren Yeager", "Mikasa Ackerman", "Armin Arlert", "Levi Ackerman", "Erwin Smith", "Hange Zoë", "Jean Kirstein", "Connie Springer", "Sasha Blouse", "Historia Reiss", "Ymir", "Reiner Braun", "Bertholdt Fubar", "Annie Leonhart", "Zeke Yeager", "Pieck Finger", "Porco Galliard", "Falco Grice", "Gabi Braun", "Dot Pixis", "Keith Shadis", "Floch Forster","Kenny Ackerman"],
     "Lieux": [
-        "Paris", "Londres", "Madrid", "Rome", "Tokyo", "New York",
-        "Plage", "Montagne", "Campagne", "Ville", "Désert",
-        "École", "Université", "Bureau", "Hôpital"
-    ],
+        "Tanjiro", "Zenitsu", "Inosuke", "Kagaya", "Tomioka – Pilier de l’Eau", "Shinobu – Pilier de l’Insecte", "Kyojuro – Pilier de la Flamme", "Tengen – Pilier du Son", "Muichiro – Pilier de la Brume", "Mitsuri – Pilier de l’Amour", "Sanemi – Pilier du Vent", "Obanai – Pilier du Serpent", "Gyomei – Pilier de la Roche", "Urokodaki – Ancien Pilier de l’Eau", "Kanae – Ancien Pilier de la Fleur", "Sabito", "Kanao", "Genya", "Hotaru – Forgeron des Slayers", "Pourfendeur de Démons", "Jigoro", "Yoriichi", "Shinjurô", "Muzan – Empereur des Démons", "Kokushibo – Lune Supérieure 1", "Doma – Lune Supérieure 2", "Akaza – Lune Supérieure 3", "Hantengu – Lune Supérieure 4", "Nakime – Lune Supérieure 4 (Remplaçante)", "Gyokko – Lune Supérieure 5", "Daki", "Gyutaro – Lunes Supérieures 6", "Kaigaku", "Enmu – Lune Inférieure 1", "Rui – Lune Inférieure 2", "Susamaru", "Yahaba", "Kumo", "Hairo", "Furûto", "Nezuko", "Yushiro", "Tamayo"],
     "Difficile": [
         "Amour", "Amitié", "Haine", "Jalousie",
         "Philosophie", "Psychologie", "Mathématiques",
@@ -394,3 +384,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`SERVEUR LANCÉ sur le port ${PORT}`);
 });
+
