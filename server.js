@@ -119,13 +119,20 @@ io.on('connection', (socket) => {
     lancerTour(room);
   });
 
+  // ------------------------------------------------------
+  // 🔽 CORRECTION BUG DU 2E TOUR (Index mort/vivant) 🔽
+  // ------------------------------------------------------
   socket.on('envoyer_mot_tour', (mot) => {
     const j = joueurs[socket.id];
     const room = rooms[j.room];
     if (!room || room.gameData.phase !== 'tour') return;
     room.lastAction = Date.now();
-    const currentP = room.joueurs[room.gameData.indexJoueurActuel];
-    if (currentP.id === socket.id) {
+
+    // IL FAUT RÉCUPÉRER LA LISTE DES VIVANTS D'ABORD
+    const vivants = room.joueurs.filter(p => p.vivant);
+    const currentP = vivants[room.gameData.indexJoueurActuel]; // <-- C'était ici le bug
+
+    if (currentP && currentP.id === socket.id) {
         clearInterval(room.gameData.timer);
         currentP.motEcrit = mot;
         room.gameData.indexJoueurActuel++;
@@ -155,7 +162,8 @@ io.on('connection', (socket) => {
     if (mot.trim().toLowerCase() === room.gameData.motCivil.toLowerCase()) {
         finirPartie(room, 'Mr. White');
     } else {
-        io.to(room.code).emit('info', `❌ Raté ! Le mot était "${room.gameData.motCivil}".`);
+        // 🔽 CORRECTION : Ne pas révéler le mot si la partie continue ! 🔽
+        io.to(room.code).emit('info', `❌ Raté ! Mr. White (${j.pseudo}) s'est trompé de mot.`);
         eliminerJoueur(room, socket.id);
     }
   });
@@ -256,7 +264,6 @@ function traiterResultatVote(room) {
     }
     const jElimine = room.joueurs.find(p => p.id === elimineId);
     
-    // Si c'est Mr White qui est voté, il a sa chance
     if (jElimine.role === 'Mr. White') {
         room.gameData.phase = 'white_guess';
         io.to(room.code).emit('mr_white_chance', { id: elimineId, pseudo: jElimine.pseudo });
@@ -265,7 +272,6 @@ function traiterResultatVote(room) {
     }
 }
 
-// --- LOGIQUE D'ÉLIMINATION AVANCÉE ---
 function eliminerJoueur(room, id) {
     const p = room.joueurs.find(j => j.id === id);
     p.vivant = false;
@@ -276,31 +282,27 @@ function eliminerJoueur(room, id) {
     const nbUnder = vivants.filter(p => p.role === 'Undercover').length;
     const nbWhite = vivants.filter(p => p.role === 'Mr. White').length;
 
-    // 1. S'il ne reste QUE des gentils -> VICTOIRE CIVILS
+    // 1. VICTOIRE CIVILS
     if (nbUnder === 0 && nbWhite === 0) {
         finirPartie(room, 'Civils');
         return;
     }
 
-    // 2. CAS DUEL FINAL AVEC MR WHITE (1v1)
-    // Si on est dans une situation où il reste (1 White + 1 Civil) OU (1 White + 1 Undercover)
+    // 2. DUEL FINAL MR WHITE
     if (nbWhite === 1 && (nbCivils + nbUnder === 1)) {
          const whitePlayer = vivants.find(p => p.role === 'Mr. White');
-         
-         // Au lieu de refaire un tour de parole inutile, on force Mr White à deviner
          room.gameData.phase = 'white_guess';
          io.to(room.code).emit('info', "DUEL FINAL ! Mr. White doit deviner le mot maintenant.");
          io.to(room.code).emit('mr_white_chance', { id: whitePlayer.id, pseudo: whitePlayer.pseudo });
          return;
     }
 
-    // 3. Si Mr White est mort, on vérifie la domination classique des Undercovers
+    // 3. VICTOIRE IMPOSTEURS (SI White est mort)
     if (nbWhite === 0 && nbUnder >= nbCivils) {
         finirPartie(room, 'Imposteurs');
         return;
     }
 
-    // 4. Sinon, le jeu continue (il y a encore du suspens)
     nextRound(room);
 }
 
