@@ -4,58 +4,212 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Undercover Ultimate</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* STYLES IDENTIQUES */
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; text-align: center; margin: 0; padding: 0; }
-        button { cursor: pointer; border: none; border-radius: 8px; padding: 12px 24px; font-weight: bold; font-size: 16px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: 5px; }
-        button:active { transform: scale(0.98); }
-        .btn-blue { background: #3498db; color: white; }
-        .btn-green { background: #2ecc71; color: white; }
-        .btn-red { background: #e74c3c; color: white; }
-        input, select { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; text-align: center; }
-        input[type=text] { width: 200px; }
-        .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; min-height: 100vh; box-sizing: border-box; }
-        .active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 20px; }
-        .room-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        /* --- DESIGN MODERNE & GLASSMORPHISM --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #bb86fc;
+            --success: #03dac6;
+            --danger: #cf6679;
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* BOUTONS STYLÉS */
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-blue { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+        .btn-green { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+        .btn-red { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+
+        /* INPUTS */
+        input, select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #2c2c2c;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            margin: 5px;
+        }
+        input:focus { border-color: var(--accent); }
+
+        /* LAYOUT */
+        .screen { display: none; padding: 20px; max-width: 600px; margin: 0 auto; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; }
+        .active { display: flex; }
+
+        /* CARTES */
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        /* LISTE SALONS */
+        .room-item { 
+            background: #252525; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #333;
+        }
         .room-info { text-align: left; }
-        .room-players-list { font-size: 12px; color: #777; margin-top: 4px; }
+        .room-players-list { font-size: 12px; color: #888; margin-top: 4px; }
+
+        /* SETTINGS */
         .settings-box { text-align: left; width: 100%; }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .game-header { display: flex; justify-content: space-between; width: 100%; padding: 10px; background: white; border-radius: 0 0 15px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: fixed; top: 0; left: 0; z-index: 10; box-sizing: border-box; }
-        .game-content { margin-top: 80px; width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .player-card { width: 90px; margin: 10px; position: relative; transition: 0.3s; }
-        .avatar { width: 70px; height: 70px; border-radius: 50%; background: #eee; margin: auto; border: 3px solid transparent; overflow: hidden; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; }
+
+        /* JEU */
+        .game-header {
+            display: flex; justify-content: space-between; width: 100%; padding: 15px;
+            background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: fixed; top: 0; left: 0; z-index: 10; box-sizing: border-box;
+        }
+        .game-content { margin-top: 100px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+        /* JOUEURS AVATARS */
+        .player-card { width: 100px; margin: 10px; position: relative; transition: 0.3s; }
+        .avatar { 
+            width: 80px; height: 80px; border-radius: 50%; 
+            background: #333; margin: auto; 
+            border: 3px solid transparent; overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
         .avatar img { width: 100%; }
-        .bubble { background: white; border: 1px solid #ddd; padding: 5px; border-radius: 10px; font-size: 12px; margin-top: 5px; font-weight: bold; min-height: 20px; }
-        .actif .avatar { border-color: #f1c40f; transform: scale(1.1); box-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
-        .mort { opacity: 0.5; filter: grayscale(100%); }
-        .victory-text { color: #2ecc71; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
-        .defeat-text { color: #e74c3c; font-size: 1.5rem; margin: 10px 0; font-weight: bold; }
-        .words-reveal { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #e9ecef; }
-        .word-tag { padding: 5px 10px; border-radius: 5px; font-weight: bold; margin: 0 5px; }
-        .tag-civil { background: #e8f5e9; color: #2ecc71; }
-        .tag-imposter { background: #fce4ec; color: #e74c3c; }
-        .final-row { background: white; border: 1px solid #eee; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+        .bubble { 
+            background: #333; color: #fff; padding: 5px 10px; 
+            border-radius: 12px; font-size: 12px; margin-top: 5px; 
+            font-weight: bold; min-height: 20px; border: 1px solid #555;
+        }
+        .actif .avatar { border-color: var(--accent); transform: scale(1.1); box-shadow: 0 0 20px rgba(187, 134, 252, 0.6); }
+        .mort { opacity: 0.4; filter: grayscale(100%); }
+
+        /* TIMER BAR */
+        #timer-bar { height: 4px; background: var(--danger); width: 0%; position: fixed; top: 85px; left:0; z-index: 11; box-shadow: 0 0 10px var(--danger); }
+
+        /* HISTORIQUE */
+        #history-box {
+            width: 100%; max-width: 400px; height: 150px; 
+            background: rgba(0,0,0,0.2); border: 1px solid #333; 
+            border-radius: 10px; margin-top: 20px; overflow-y: auto; 
+            text-align: left; padding: 10px; margin-bottom: 120px;
+        }
+        .history-item { border-bottom: 1px solid #333; padding: 5px 0; font-size: 14px; color: #ccc; }
+        .history-item b { color: var(--accent); }
+
+        /* CONTRÔLES BAS */
+        #controls { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px);
+            padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); 
+            box-sizing: border-box; border-radius: 20px 20px 0 0;
+        }
+
+        /* NOTIFICATIONS (TOASTS) */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px;
+        }
+        .toast {
+            background: rgba(30, 30, 30, 0.9); color: white; padding: 15px;
+            border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            border-left: 5px solid var(--accent);
+            animation: slideIn 0.3s ease-out; font-weight: bold;
+        }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.success { border-left-color: var(--success); }
+
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* MODAL (ELIMINATION) */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: none; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .modal-box {
+            background: #1e1e1e; padding: 30px; border-radius: 20px;
+            text-align: center; border: 1px solid #444; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 90%;
+        }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* MR WHITE MODAL */
+        #modal-white { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 4000; color: white; }
+
+        /* FIN DE JEU */
+        .victory-text { color: var(--success); font-size: 2rem; margin: 10px 0; text-shadow: 0 0 10px rgba(3, 218, 198, 0.5); }
+        .defeat-text { color: var(--danger); font-size: 2rem; margin: 10px 0; text-shadow: 0 0 10px rgba(207, 102, 121, 0.5); }
+        .words-reveal { background: #252525; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #333; }
+        .word-tag { padding: 5px 10px; border-radius: 5px; font-weight: bold; margin: 0 5px; display: inline-block; }
+        .tag-civil { background: rgba(3, 218, 198, 0.2); color: var(--success); }
+        .tag-imposter { background: rgba(207, 102, 121, 0.2); color: var(--danger); }
+        .final-row { background: #252525; border: 1px solid #333; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
         .role-badge { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; margin-left: 5px; text-transform: uppercase; font-weight: bold; }
-        .badge-Civil { background: #e8f5e9; color: #2e7d32; }
-        .badge-Undercover { background: #ffebee; color: #c62828; }
-        .badge-Mr { background: #e3f2fd; color: #1565c0; }
-        #controls { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); box-sizing: border-box; }
-        #modal-white { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 999; color: white; }
+        .badge-Civil { background: #2e7d32; color: white; }
+        .badge-Undercover { background: #c62828; color: white; }
+        .badge-Mr { background: #1565c0; color: white; }
+
     </style>
 </head>
 <body>
 
+    <div id="toast-container"></div>
+
+    <div id="modal-overlay" onclick="closeModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h2 id="modal-title" style="margin-top:0;">Titre</h2>
+            <p id="modal-message" style="font-size: 18px;">Message</p>
+            <button class="btn-blue" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
     <div id="screen-home" class="screen active">
         <div class="card">
-            <h1>🕵️ Undercover</h1>
-            <p>Entrez votre pseudo pour jouer</p>
+            <h1 style="font-size: 3rem; margin-bottom: 10px;">🕵️</h1>
+            <h1 style="margin-top:0;">Undercover</h1>
+            <p style="color:#aaa;">Entrez votre pseudo pour jouer</p>
             <input type="text" id="pseudo" placeholder="Pseudo..." />
             <br><br>
             <button class="btn-blue" onclick="showCreate()">Créer une partie</button>
-            <button class="btn-green" onclick="showBrowser()">Rejoindre une partie</button>
+            <button class="btn-green" onclick="showBrowser()">Rejoindre</button>
         </div>
     </div>
 
@@ -70,10 +224,11 @@
 
     <div id="screen-lobby" class="screen">
         <div class="card">
-            <h2>Salle : <span id="room-code-display" style="color: #3498db;"></span></h2>
+            <h2>Salle : <span id="room-code-display" style="color: var(--accent);"></span></h2>
+            
             <div class="settings-box">
                 <div class="setting-row">
-                    <span>📚 Liste de mots</span>
+                    <span>📚 Univers</span>
                     <select id="opt-category" onchange="updateSettings()" disabled>
                         <option value="Naruto">Naruto</option>
                         <option value="AoT">Attack on Titan</option>
@@ -87,33 +242,36 @@
                 <div class="setting-row"><span>⏱️ Parole (s)</span> <input type="number" id="opt-time-word" style="width: 60px;" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>⏳ Vote (s)</span> <input type="number" id="opt-time-vote" style="width: 60px;" onchange="updateSettings()" disabled></div>
             </div>
+            
             <div id="lobby-players" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px;"></div>
+            
             <br>
             <div id="host-controls" style="display: none;">
-                <button class="btn-green" onclick="lancerPartie()">LANCER LA PARTIE</button>
+                <button class="btn-green" onclick="lancerPartie()" style="width: 100%;">LANCER LA PARTIE</button>
             </div>
-            <div id="guest-msg">En attente de l'hôte...</div>
+            <div id="guest-msg" style="color: #aaa;">En attente de l'hôte...</div>
             <br>
-            <button class="btn-red" onclick="quitRoom()">Quitter le salon</button>
+            <button class="btn-red" onclick="quitRoom()">Quitter</button>
         </div>
     </div>
 
     <div id="screen-game" class="screen" style="justify-content: flex-start;">
         <div class="game-header">
             <div style="text-align: left;">
-                <span id="my-role" style="font-weight: bold;">Rôle caché</span><br>
-                <span id="my-word" style="color: #e74c3c; font-weight: bold;">???</span>
+                <span id="my-role" style="font-weight: bold; color: #aaa;">Rôle caché</span><br>
+                <span id="my-word" style="color: var(--accent); font-weight: bold; font-size: 1.2rem;">???</span>
             </div>
-            <div style="font-size: 24px; font-weight: bold; color: #333;" id="timer-display">--</div>
+            <div style="font-size: 24px; font-weight: bold; color: white;" id="timer-display">--</div>
         </div>
-        <div id="timer-bar" style="height: 4px; background: #e74c3c; width: 0%; position: fixed; top: 75px; left:0;"></div>
+        <div id="timer-bar"></div>
         <div class="game-content">
             <div id="game-plateau" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+            <div id="history-box"><div style="color: #555; text-align: center; padding-top: 60px;">Historique de la partie...</div></div>
         </div>
         <div id="controls" style="display: none;">
-            <h3 id="instruction" style="margin-top: 0;">...</h3>
+            <h3 id="instruction" style="margin-top: 0; color: var(--accent);">...</h3>
             <div id="input-area" style="display: none;">
-                <input type="text" id="word-input" placeholder="Votre mot..." />
+                <input type="text" id="word-input" placeholder="Votre mot..." style="width: 70%;" />
                 <button class="btn-blue" onclick="sendWord()">Envoyer</button>
             </div>
             <div id="zone-vote" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;"></div>
@@ -123,7 +281,7 @@
     <div id="screen-end" class="screen">
         <div class="card">
             <div id="end-header">
-                <h1>Partie Terminée !</h1>
+                <h1>Partie Terminée</h1>
                 <div id="result-title" class="victory-text">VICTOIRE</div>
             </div>
             <div class="words-reveal">
@@ -131,7 +289,7 @@
                 <span class="word-tag tag-civil" id="end-mot-civil">Civil</span>
                 <span class="word-tag tag-imposter" id="end-mot-under">Imposteur</span>
             </div>
-            <h3>État Final</h3>
+            <h3>Résultat Final</h3>
             <div id="final-list" style="width: 100%; margin-top: 20px;"></div>
             <br>
             <button class="btn-blue" onclick="backToLobby()">Retour au Salon</button>
@@ -148,8 +306,43 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        // 🔧 CLIENT
+        const socket = io({
+            reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000                  
+        });
+
+        socket.on("connect", () => { console.log("Connecté ! ID: " + socket.id); });
+        socket.on("disconnect", (reason) => { if (reason === "io server disconnect") socket.connect(); });
+
         let myId = "", isHost = false, myRole = "";
+
+        // --- NOUVEAU SYSTÈME DE NOTIFICATION ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function showModal(title, message) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        // --- SETUP ---
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('word-input').addEventListener("keypress", (e) => { if (e.key === 'Enter') sendWord(); });
+            document.getElementById('white-input').addEventListener("keypress", (e) => { if (e.key === 'Enter') guessWhite(); });
+        });
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -158,16 +351,16 @@
         function goHome() { showScreen('screen-home'); }
         function showCreate() {
             const pseudo = document.getElementById('pseudo').value;
-            if(!pseudo) return alert("Choisis un pseudo !");
+            if(!pseudo) return showToast("Choisis un pseudo !", 'error');
             socket.emit('creer_room', { pseudo });
         }
         function showBrowser() {
             const pseudo = document.getElementById('pseudo').value;
-            if(!pseudo) return alert("Choisis un pseudo !");
+            if(!pseudo) return showToast("Choisis un pseudo !", 'error');
             showScreen('screen-browser');
         }
         function quitRoom() {
-            if(confirm("Veux-tu vraiment quitter ce salon ?")) {
+            if(confirm("Quitter le salon ?")) {
                 socket.emit('quitter_room');
                 goHome();
                 isHost = false;
@@ -175,22 +368,32 @@
             }
         }
 
+        // --- SOCKET LISTENERS ---
         socket.on('connect', () => { myId = socket.id; });
+
+        // Anciens alert() remplacés par showToast()
+        socket.on('info', msg => showToast(msg, 'info'));
+        socket.on('erreur', msg => showToast(msg, 'error'));
+        
+        // Ancienne élimination remplacée par showModal()
+        socket.on('joueur_elimine', data => {
+            showModal("Élimination", `${data.pseudo} a été éliminé.\nIl était : ${data.role}`);
+        });
 
         socket.on('update_room_list', (rooms) => {
             const list = document.getElementById('room-list');
             list.innerHTML = "";
-            if(rooms.length === 0) list.innerHTML = "<p>Aucune partie.</p>";
+            if(rooms.length === 0) list.innerHTML = "<p style='color:#777;'>Aucune partie en attente.</p>";
             rooms.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'room-item';
                 const playersList = r.players.length > 0 ? r.players.join(', ') : "Vide";
                 div.innerHTML = `
                     <div class="room-info">
-                        <div style="font-weight:bold;">Salle ${r.code} (${r.nb})</div>
-                        <div class="room-players-list">Joueurs: ${playersList}</div>
+                        <div style="font-weight:bold; color:white;">Salle ${r.code} <span style="color:#777;">(${r.nb})</span></div>
+                        <div class="room-players-list">${playersList}</div>
                     </div>
-                    <button class="btn-blue" onclick="joinRoom('${r.code}')">Rejoindre</button>
+                    <button class="btn-blue" onclick="joinRoom('${r.code}')">Go</button>
                 `;
                 list.appendChild(div);
             });
@@ -210,6 +413,18 @@
         socket.on('update_plateau', (data) => {
             renderPlayers(data.joueurs, 'lobby-players');
             renderPlayers(data.joueurs, 'game-plateau');
+            
+            const historyBox = document.getElementById('history-box');
+            if (data.historique && data.historique.length > 0) {
+                historyBox.innerHTML = ""; 
+                data.historique.forEach(h => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `<b>${h.pseudo} :</b> ${h.mot}`;
+                    historyBox.appendChild(item);
+                });
+                historyBox.scrollTop = historyBox.scrollHeight;
+            }
         });
 
         let currentSettings = {};
@@ -223,6 +438,7 @@
             document.getElementById('opt-time-vote').value = settings.timeVote;
             document.getElementById('opt-white-start').disabled = !isHost || !settings.hasWhite;
         });
+
         function updateSettings() {
             if(!isHost) return;
             const settings = {
@@ -235,6 +451,7 @@
             };
             socket.emit('update_settings', settings);
         }
+
         function updateLobbyUI(settings) {
             const ids = ['opt-category', 'opt-undercover', 'opt-white', 'opt-time-word', 'opt-time-vote'];
             ids.forEach(id => document.getElementById(id).disabled = !isHost);
@@ -248,6 +465,7 @@
 
         socket.on('debut_jeu', (data) => {
             showScreen('screen-game');
+            document.getElementById('history-box').innerHTML = '<div style="color: #555; text-align: center; padding-top: 60px;">Historique de la partie...</div>';
             myRole = data.role;
             if (data.role === 'Mr. White') {
                 document.getElementById('my-role').innerText = "Tu es : Mr. White 🎩";
@@ -256,7 +474,7 @@
             } else {
                 document.getElementById('my-role').innerText = "Ton mot secret :";
                 document.getElementById('my-word').innerText = data.mot;
-                document.getElementById('my-role').style.color = "#333";
+                document.getElementById('my-role').style.color = "#ccc";
             }
         });
 
@@ -265,10 +483,13 @@
             document.getElementById('controls').style.display = 'block';
             highlightPlayer(data.id);
             startTimer(data.duree);
-            if(data.id === myId) {
+            
+            const monPseudo = document.getElementById('pseudo').value;
+            if(data.pseudo === monPseudo) {
                 document.getElementById('instruction').innerText = "C'EST À TOI !";
                 document.getElementById('input-area').style.display = 'block';
                 document.getElementById('word-input').focus();
+                showToast("C'est à toi de jouer !", 'info');
             } else {
                 document.getElementById('instruction').innerText = `Tour de ${data.pseudo}`;
             }
@@ -284,18 +505,26 @@
             startTimer(data.duree);
             const zone = document.getElementById('zone-vote');
             zone.innerHTML = "";
-            data.vivants.forEach(p => {
-                if(p.id !== myId) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-red';
-                    btn.innerText = p.pseudo;
-                    btn.onclick = () => {
-                        socket.emit('vote_contre', p.id);
-                        zone.innerHTML = "<p>A voté !</p>";
-                    };
-                    zone.appendChild(btn);
-                }
-            });
+            
+            const monPseudo = document.getElementById('pseudo').value;
+            const moi = data.vivants.find(p => p.pseudo === monPseudo);
+            
+            if (!moi) {
+                zone.innerHTML = "<p style='color:#888;'>Vous êtes éliminé. (Spectateur)</p>";
+            } else {
+                data.vivants.forEach(p => {
+                    if(p.pseudo !== monPseudo) {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-red';
+                        btn.innerText = p.pseudo;
+                        btn.onclick = () => {
+                            socket.emit('vote_contre', p.id);
+                            zone.innerHTML = "<p style='color:#aaa;'>A voté !</p>";
+                        };
+                        zone.appendChild(btn);
+                    }
+                });
+            }
         });
 
         socket.on('game_over', (data) => {
@@ -308,7 +537,7 @@
 
             if (victory) { title.innerText = "VICTOIRE ! 🎉"; title.className = "victory-text"; } 
             else { title.innerText = "DÉFAITE... 💀"; title.className = "defeat-text"; }
-            title.innerHTML += `<br><span style="font-size: 1rem; color: #666;">(Les ${data.gagnant} gagnent)</span>`;
+            title.innerHTML += `<br><span style="font-size: 1rem; color: #888;">(Les ${data.gagnant} gagnent)</span>`;
 
             document.getElementById('end-mot-civil').innerText = data.motCivil + " (Civil)";
             document.getElementById('end-mot-under').innerText = data.motUndercover + " (Undercover)";
@@ -321,8 +550,8 @@
                 let badgeClass = "badge-Civil";
                 if(p.role === 'Undercover') badgeClass = "badge-Undercover";
                 if(p.role === 'Mr. White') badgeClass = "badge-Mr";
-                const statut = p.vivant ? "" : '<span style="color:red; margin-left:5px;">(Éliminé)</span>';
-                const motAffiché = p.mot ? `<br><small>Mot : ${p.mot}</small>` : "";
+                const statut = p.vivant ? "" : '<span style="color:#cf6679; margin-left:5px;">(Éliminé)</span>';
+                const motAffiché = p.mot ? `<br><small style='color:#aaa;'>Mot : ${p.mot}</small>` : "";
                 row.innerHTML = `<div><strong>${p.pseudo}</strong> <span class="role-badge ${badgeClass}">${p.role}</span> ${statut}${motAffiché}</div>`;
                 list.appendChild(row);
             });
@@ -358,7 +587,7 @@
                 card.className = `player-card ${p.vivant ? '' : 'mort'}`;
                 card.id = `card-${p.id}`;
                 const avatarUrl = `https://ui-avatars.com/api/?name=${p.pseudo}&background=${p.avatarColor}&color=fff&size=128`;
-                card.innerHTML = `<div class="avatar"><img src="${avatarUrl}"></div><div class="bubble">${p.pseudo}</div><div style="font-size:11px; margin-top:2px;">${p.motEcrit || "..."}</div>`;
+                card.innerHTML = `<div class="avatar"><img src="${avatarUrl}"></div><div class="bubble">${p.pseudo}</div><div style="font-size:11px; margin-top:2px; color:#ccc;">${p.motEcrit || "..."}</div>`;
                 div.appendChild(card);
             });
         }
@@ -381,10 +610,6 @@
             socket.emit('guess_white', val);
             document.getElementById('modal-white').style.display = 'none';
         }
-
-        socket.on('info', msg => alert(msg));
-        socket.on('joueur_elimine', data => alert(`${data.pseudo} éliminé (${data.role})`));
-        socket.on('erreur', msg => alert(msg));
     </script>
 </body>
 </html>
