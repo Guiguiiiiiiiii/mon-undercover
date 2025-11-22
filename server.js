@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// 🔽 LISTES DE MOTS 🔽
+// 🔽 LISTES DE MOTS (ANIME) 🔽
 const listesDeMots = {
     "Naruto": [
         "Naruto", "Sasuke", "Sakura", "Kakashi", "Hinata", "Neji", "Rock", "Tenten", "Gaara", "Kankuro", "Temari", "Shikamaru", "Choji", "Ino", "Sai", "Yamato", "Jiraiya", "Tsunade", "Orochimaru", "Itachi", "Kisame", "Deidara", "Sasori", "Hidan","Kakuzu", "Pain", "Konan", "Nagato", "Obito", "Madara", "Minato", "Kushina", "Tobirama", "Hashirama", "Hiruzen", "Danzo", "Killer", "Kiba", "Akamaru", "Shino", "Gai", "Iruka", "Konohamaru", "Hanabi", "Karin", "Suigetsu", "Jugo", "Kabuto","Kaguya", "Hanzo", "Zabuza", "Haku"
@@ -87,7 +87,11 @@ io.on('connection', (socket) => {
 
     room.lastAction = Date.now();
     room.status = 'playing';
-    room.gameData = { indexJoueurActuel: 0, votes: {}, phase: 'tour', timer: null, historique: [] };
+    
+    // INIT JEU
+    room.gameData = { 
+        indexJoueurActuel: 0, votes: {}, phase: 'tour', timer: null, historique: [] 
+    };
 
     const cat = room.settings.category;
     const listeChoisie = listesDeMots[cat] || listesDeMots["Naruto"];
@@ -97,7 +101,9 @@ io.on('connection', (socket) => {
     
     const motCivil = listeChoisie[idx1];
     const motUndercover = listeChoisie[idx2];
+    
     room.gameData.motCivil = motCivil;
+    room.gameData.motUndercover = motUndercover; // On stocke ça pour la révélation
 
     room.joueurs.forEach(p => { p.role = 'Civil'; p.motSecret = motCivil; p.vivant = true; p.motEcrit = ""; });
 
@@ -181,6 +187,28 @@ io.on('connection', (socket) => {
         io.to(room.code).emit('info', `❌ Raté ! Mr. White (${j.pseudo}) s'est trompé.`);
         eliminerJoueur(room, socket.id);
     }
+  });
+
+  // 🔽 NOUVEAU : GESTION DE LA RÉVÉLATION POUR LES MORTS 🔽
+  socket.on('demande_revelation', () => {
+      const j = joueurs[socket.id];
+      if (!j || !rooms[j.room]) return;
+      const room = rooms[j.room];
+      const moi = room.joueurs.find(p => p.id === socket.id);
+
+      // On n'envoie l'info que si le joueur est mort
+      if (moi && !moi.vivant) {
+          const infosSecrets = {
+              motCivil: room.gameData.motCivil,
+              motUndercover: room.gameData.motUndercover,
+              joueurs: room.joueurs.map(p => ({
+                  pseudo: p.pseudo,
+                  role: p.role,
+                  vivant: p.vivant
+              }))
+          };
+          io.to(socket.id).emit('revelation_data', infosSecrets);
+      }
   });
 
   socket.on('disconnect', () => { gererDepart(socket); });
@@ -289,6 +317,7 @@ function traiterResultatVote(room) {
         return;
     }
     const jElimine = room.joueurs.find(p => p.id === elimineId);
+    
     if (jElimine.role === 'Mr. White') {
         room.gameData.phase = 'white_guess';
         io.to(room.code).emit('mr_white_chance', { id: elimineId, pseudo: jElimine.pseudo });
@@ -326,9 +355,12 @@ function finirPartie(room, equipeGagnante) {
     const resume = {
         gagnant: equipeGagnante,
         motCivil: room.gameData.motCivil,
-        motUndercover: room.joueurs.find(p => p.role === 'Undercover')?.motSecret || "Aucun",
+        motUndercover: room.gameData.motUndercover,
         joueurs: room.joueurs.map(p => ({
-            pseudo: p.pseudo, role: p.role, mot: (p.role === 'Mr. White' ? "Aucun" : p.motSecret), vivant: p.vivant
+            pseudo: p.pseudo,
+            role: p.role,
+            mot: (p.role === 'Mr. White' ? "Aucun" : p.motSecret),
+            vivant: p.vivant
         }))
     };
     io.to(room.code).emit('game_over', resume);
