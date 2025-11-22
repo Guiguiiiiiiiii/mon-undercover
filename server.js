@@ -4,24 +4,31 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// 🔧 CONFIGURATION ANTI-DÉCONNEXION
+const io = new Server(server, {
+  pingInterval: 25000,
+  pingTimeout: 60000,
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000,
+    skipMiddlewares: true,
+  }
+});
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// ============================================================
-// 🔽 LISTES DE MOTS (ANIME) 🔽
-// ============================================================
+// 🔽 LISTES DE MOTS 🔽
 const listesDeMots = {
     "Naruto": [
-        "Naruto Uzumaki", "Sasuke Uchiha", "Sakura Haruno", "Kakashi Hatake", "Hinata Hyuga", "Neji Hyuga", "Rock Lee", "Tenten", "Gaara", "Kankuro", "Temari", "Shikamaru Nara", "Choji Akimichi", "Ino Yamanaka", "Sai", "Yamato", "Jiraiya", "Tsunade", "Orochimaru", "Itachi Uchiha", "Kisame Hoshigaki", "Deidara", "Sasori", "Hidan","Kakuzu", "Pain", "Konan", "Nagato", "Obito Uchiha", "Madara Uchiha", "Minato Namikaze", "Kushina Uzumaki", "Tobirama Senju", "Hashirama Senju", "Hiruzen Sarutobi", "Danzo Shimura", "Killer Bee", "Kiba Inuzuka", "Akamaru", "Shino Aburame", "Might Guy", "Iruka Umino", "Konohamaru Sarutobi", "Hanabi Hyuga", "Karin", "Suigetsu Hozuki", "Jugo", "Kabuto Yakushi","Kaguya", "Hanzo", "Zabuza", "Haku"
+        "Naruto", "Sasuke", "Sakura", "Kakashi", "Hinata", "Neji", "Rock", "Tenten", "Gaara", "Kankuro", "Temari", "Shikamaru", "Choji", "Ino", "Sai", "Yamato", "Jiraiya", "Tsunade", "Orochimaru", "Itachi", "Kisame", "Deidara", "Sasori", "Hidan","Kakuzu", "Pain", "Konan", "Nagato", "Obito", "Madara", "Minato", "Kushina", "Tobirama", "Hashirama", "Hiruzen", "Danzo", "Killer", "Kiba", "Akamaru", "Shino", "Gai", "Iruka", "Konohamaru", "Hanabi", "Karin", "Suigetsu", "Jugo", "Kabuto","Kaguya", "Hanzo", "Zabuza", "Haku"
     ],
     "AoT": [
-        "Eren Yeager", "Mikasa Ackerman", "Armin Arlert", "Levi Ackerman", "Erwin Smith", "Hange Zoë", "Jean Kirstein", "Connie Springer", "Sasha Blouse", "Historia Reiss", "Ymir", "Reiner Braun", "Bertholdt Fubar", "Annie Leonhart", "Zeke Yeager", "Pieck Finger", "Porco Galliard", "Falco Grice", "Gabi Braun", "Dot Pixis", "Keith Shadis", "Floch Forster","Kenny Ackerman"
+        "Eren", "Mikasa", "Armin", "Levi", "Erwin", "Hansi", "Jean", "Conny", "Sasha", "Historia", "Ymir", "Reiner", "Bertholt", "Annie", "SIeg", "Pieck", "Porco", "Falco", "Gabi", "Pixis", "Keith Shadis", "Floch","Kenny"
     ],
     "Demon Slayer": [
-        "Tanjiro", "Zenitsu", "Inosuke", "Kagaya", "Tomioka – Pilier de l’Eau", "Shinobu – Pilier de l’Insecte", "Kyojuro – Pilier de la Flamme", "Tengen – Pilier du Son", "Muichiro – Pilier de la Brume", "Mitsuri – Pilier de l’Amour", "Sanemi – Pilier du Vent", "Obanai – Pilier du Serpent", "Gyomei – Pilier de la Roche", "Urokodaki – Ancien Pilier de l’Eau", "Kanae – Ancien Pilier de la Fleur", "Sabito", "Kanao", "Genya", "Hotaru – Forgeron des Slayers", "Pourfendeur de Démons", "Jigoro", "Yoriichi", "Shinjurô", "Muzan – Empereur des Démons", "Kokushibo – Lune Supérieure 1", "Doma – Lune Supérieure 2", "Akaza – Lune Supérieure 3", "Hantengu – Lune Supérieure 4", "Nakime – Lune Supérieure 4 (Remplaçante)", "Gyokko – Lune Supérieure 5", "Daki", "Gyutaro – Lunes Supérieures 6", "Kaigaku", "Enmu – Lune Inférieure 1", "Rui – Lune Inférieure 2", "Susamaru", "Yahaba", "Kumo", "Hairo", "Furûto", "Nezuko", "Yushiro", "Tamayo"
+        "Tanjiro", "Zenitsu", "Inosuke", "Kagaya", "Tomioka", "Shinobu", "Kyojuro", "Tengen", "Muichiro", "Mitsuri", "Sanemi", "Obanai", "Gyomei", "Urokodaki", "Kanae", "Sabito", "Kanao", "Genya", "Hotaru", "Pourfendeur de Démons", "Jigoro", "Yoriichi", "Shinjuro", "Muzan", "Kokushibo", "Doma", "Akaza", "Hantengu", "Nakime", "Gyokko", "Daki", "Gyutaro", "Kaigaku", "Enmu", "Rui", "Susamaru", "Yahaba", "Kumo", "Hairo", "Furuto", "Nezuko", "Yushiro", "Tamayo"
     ],
     "Difficile": [
         "Amour", "Amitié", "Haine", "Jalousie",
@@ -41,7 +48,10 @@ io.on('connection', (socket) => {
     const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
     rooms[roomCode] = {
         code: roomCode, hostId: socket.id, joueurs: [], status: 'waiting', lastAction: Date.now(), 
-        settings: { category: "Naruto", hasUndercover: true, hasWhite: true, whiteCanStart: false, timeWord: 20, timeVote: 15 },
+        settings: { 
+            category: "Naruto", hasUndercover: true, hasWhite: true, whiteCanStart: false, 
+            timeWord: 1000, timeVote: 1000 
+        },
         gameData: {}
     };
     rejoindreLaSalle(socket, infos.pseudo, roomCode);
@@ -77,7 +87,7 @@ io.on('connection', (socket) => {
 
     room.lastAction = Date.now();
     room.status = 'playing';
-    room.gameData = { indexJoueurActuel: 0, votes: {}, phase: 'tour', timer: null };
+    room.gameData = { indexJoueurActuel: 0, votes: {}, phase: 'tour', timer: null, historique: [] };
 
     const cat = room.settings.category;
     const listeChoisie = listesDeMots[cat] || listesDeMots["Naruto"];
@@ -119,22 +129,23 @@ io.on('connection', (socket) => {
     lancerTour(room);
   });
 
-  // ------------------------------------------------------
-  // 🔽 CORRECTION BUG DU 2E TOUR (Index mort/vivant) 🔽
-  // ------------------------------------------------------
   socket.on('envoyer_mot_tour', (mot) => {
     const j = joueurs[socket.id];
+    if (!j || !rooms[j.room]) return; 
     const room = rooms[j.room];
-    if (!room || room.gameData.phase !== 'tour') return;
+    if (room.gameData.phase !== 'tour') return;
     room.lastAction = Date.now();
 
-    // IL FAUT RÉCUPÉRER LA LISTE DES VIVANTS D'ABORD
     const vivants = room.joueurs.filter(p => p.vivant);
-    const currentP = vivants[room.gameData.indexJoueurActuel]; // <-- C'était ici le bug
+    if (room.gameData.indexJoueurActuel >= vivants.length) room.gameData.indexJoueurActuel = 0;
 
-    if (currentP && currentP.id === socket.id) {
+    const currentP = vivants[room.gameData.indexJoueurActuel];
+
+    if (currentP && currentP.pseudo === j.pseudo) {
+        currentP.id = socket.id; 
         clearInterval(room.gameData.timer);
         currentP.motEcrit = mot;
+        room.gameData.historique.push({ pseudo: currentP.pseudo, mot: mot });
         room.gameData.indexJoueurActuel++;
         checkFinTour(room);
     }
@@ -144,9 +155,14 @@ io.on('connection', (socket) => {
     const j = joueurs[socket.id];
     const room = rooms[j.room];
     if(!room || room.gameData.phase !== 'vote') return;
+    
+    const joueurVotant = room.joueurs.find(p => p.id === socket.id);
+    if (!joueurVotant || !joueurVotant.vivant) return; 
+
     room.lastAction = Date.now();
     room.gameData.votes[socket.id] = idCible;
     const vivants = room.joueurs.filter(p => p.vivant);
+    
     if (Object.keys(room.gameData.votes).length === vivants.length) {
         clearInterval(room.gameData.timer);
         traiterResultatVote(room);
@@ -162,8 +178,7 @@ io.on('connection', (socket) => {
     if (mot.trim().toLowerCase() === room.gameData.motCivil.toLowerCase()) {
         finirPartie(room, 'Mr. White');
     } else {
-        // 🔽 CORRECTION : Ne pas révéler le mot si la partie continue ! 🔽
-        io.to(room.code).emit('info', `❌ Raté ! Mr. White (${j.pseudo}) s'est trompé de mot.`);
+        io.to(room.code).emit('info', `❌ Raté ! Mr. White (${j.pseudo}) s'est trompé.`);
         eliminerJoueur(room, socket.id);
     }
   });
@@ -179,12 +194,17 @@ function gererDepart(socket) {
         const room = rooms[j.room];
         if (room) {
             socket.leave(room.code);
-            room.joueurs = room.joueurs.filter(p => p.id !== socket.id);
-            if (room.joueurs.length === 0) delete rooms[j.room];
-            else {
-                if (room.hostId === socket.id) {
-                    room.hostId = room.joueurs[0].id;
-                    io.to(room.joueurs[0].id).emit('tu_es_host');
+            if (room.status === 'waiting') {
+                room.joueurs = room.joueurs.filter(p => p.id !== socket.id);
+            }
+            
+            if (room.joueurs.length === 0) {
+                delete rooms[j.room];
+            } else {
+                const present = room.joueurs.find(p => io.sockets.sockets.get(p.id));
+                if (present) {
+                    room.hostId = present.id;
+                    io.to(present.id).emit('tu_es_host');
                 }
                 envoyerEtatRoom(room);
             }
@@ -197,17 +217,22 @@ function gererDepart(socket) {
 function rejoindreLaSalle(socket, pseudo, code) {
     const room = rooms[code];
     socket.join(code);
-    const newPlayer = { id: socket.id, pseudo: pseudo, avatarColor: Math.floor(Math.random()*16777215).toString(16) };
-    room.joueurs.push(newPlayer);
+    const existingPlayer = room.joueurs.find(p => p.pseudo === pseudo);
+    if (existingPlayer) existingPlayer.id = socket.id;
+    else {
+        const newPlayer = { id: socket.id, pseudo: pseudo, avatarColor: Math.floor(Math.random()*16777215).toString(16) };
+        room.joueurs.push(newPlayer);
+    }
     room.lastAction = Date.now();
     joueurs[socket.id] = { room: code, pseudo: pseudo };
-    socket.emit('room_rejoined', { code: code, isHost: (room.hostId === socket.id), settings: room.settings });
+    socket.emit('room_rejoined', { code: code, isHost: (room.hostId === socket.id || room.hostId === existingPlayer?.id), settings: room.settings });
     io.emit('update_room_list', getPublicRooms());
     envoyerEtatRoom(room);
 }
 
 function lancerTour(room) {
     const vivants = room.joueurs.filter(p => p.vivant);
+    if (room.gameData.indexJoueurActuel >= vivants.length) room.gameData.indexJoueurActuel = 0;
     const joueurActuel = vivants[room.gameData.indexJoueurActuel];
     envoyerEtatRoom(room);
     io.to(room.code).emit('nouveau_tour', { pseudo: joueurActuel.pseudo, id: joueurActuel.id, duree: room.settings.timeWord });
@@ -217,6 +242,7 @@ function lancerTour(room) {
         if (timeLeft <= 0) {
             clearInterval(room.gameData.timer);
             joueurActuel.motEcrit = "😴"; 
+            room.gameData.historique.push({ pseudo: joueurActuel.pseudo, mot: "😴 (Temps)" });
             room.gameData.indexJoueurActuel++;
             checkFinTour(room);
         }
@@ -263,7 +289,6 @@ function traiterResultatVote(room) {
         return;
     }
     const jElimine = room.joueurs.find(p => p.id === elimineId);
-    
     if (jElimine.role === 'Mr. White') {
         room.gameData.phase = 'white_guess';
         io.to(room.code).emit('mr_white_chance', { id: elimineId, pseudo: jElimine.pseudo });
@@ -274,34 +299,25 @@ function traiterResultatVote(room) {
 
 function eliminerJoueur(room, id) {
     const p = room.joueurs.find(j => j.id === id);
-    p.vivant = false;
-    io.to(room.code).emit('joueur_elimine', { pseudo: p.pseudo, role: p.role });
+    if(p) p.vivant = false;
+    io.to(room.code).emit('joueur_elimine', { pseudo: p?.pseudo, role: p?.role });
 
     const vivants = room.joueurs.filter(p => p.vivant);
     const nbCivils = vivants.filter(p => p.role === 'Civil').length;
     const nbUnder = vivants.filter(p => p.role === 'Undercover').length;
     const nbWhite = vivants.filter(p => p.role === 'Mr. White').length;
 
-    // 1. VICTOIRE CIVILS
-    if (nbUnder === 0 && nbWhite === 0) {
-        finirPartie(room, 'Civils');
-        return;
-    }
+    if (nbUnder === 0 && nbWhite === 0) { finirPartie(room, 'Civils'); return; }
 
-    // 2. DUEL FINAL MR WHITE
     if (nbWhite === 1 && (nbCivils + nbUnder === 1)) {
          const whitePlayer = vivants.find(p => p.role === 'Mr. White');
          room.gameData.phase = 'white_guess';
-         io.to(room.code).emit('info', "DUEL FINAL ! Mr. White doit deviner le mot maintenant.");
+         io.to(room.code).emit('info', "DUEL FINAL ! Mr. White doit deviner.");
          io.to(room.code).emit('mr_white_chance', { id: whitePlayer.id, pseudo: whitePlayer.pseudo });
          return;
     }
 
-    // 3. VICTOIRE IMPOSTEURS (SI White est mort)
-    if (nbWhite === 0 && nbUnder >= nbCivils) {
-        finirPartie(room, 'Imposteurs');
-        return;
-    }
+    if (nbWhite === 0 && nbUnder >= nbCivils) { finirPartie(room, 'Imposteurs'); return; }
 
     nextRound(room);
 }
@@ -312,10 +328,7 @@ function finirPartie(room, equipeGagnante) {
         motCivil: room.gameData.motCivil,
         motUndercover: room.joueurs.find(p => p.role === 'Undercover')?.motSecret || "Aucun",
         joueurs: room.joueurs.map(p => ({
-            pseudo: p.pseudo,
-            role: p.role,
-            mot: (p.role === 'Mr. White' ? "Aucun" : p.motSecret),
-            vivant: p.vivant
+            pseudo: p.pseudo, role: p.role, mot: (p.role === 'Mr. White' ? "Aucun" : p.motSecret), vivant: p.vivant
         }))
     };
     io.to(room.code).emit('game_over', resume);
@@ -333,7 +346,9 @@ function nextRound(room) {
     setTimeout(() => lancerTour(room), 3000);
 }
 
-function envoyerEtatRoom(room) { io.to(room.code).emit('update_plateau', { joueurs: room.joueurs }); }
+function envoyerEtatRoom(room) { 
+    io.to(room.code).emit('update_plateau', { joueurs: room.joueurs, historique: room.gameData.historique || [] }); 
+}
 
 function getPublicRooms() {
     const list = [];
