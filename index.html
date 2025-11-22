@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Undercover Ultimate</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        /* --- DESIGN --- */
+        /* =========================================
+           1. DESIGN & ANIMATIONS (LE RETOUR)
+           ========================================= */
         :root {
             --bg-gradient: linear-gradient(-45deg, #0f0c29, #302b63, #24243e);
             --glass-bg: rgba(255, 255, 255, 0.05);
@@ -31,44 +32,64 @@
             display: flex; flex-direction: column;
         }
 
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
+        /* --- BOUTONS JUTEUX --- */
         button {
             cursor: pointer; border: none; border-radius: 12px; padding: 14px 28px;
             font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;
-            transition: all 0.3s; position: relative; overflow: hidden; margin: 8px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: white;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; overflow: hidden;
+            margin: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); color: white;
         }
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s;
+        }
+        button:hover::after { left: 100%; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
+        button:active { transform: translateY(1px) scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .btn-blue { background: linear-gradient(135deg, #667eea, #764ba2); }
         .btn-green { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a1a2e; }
         .btn-red { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
-        .btn-purple { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #1a1a2e; } /* Nouveau bouton */
+        .btn-purple { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #1a1a2e; }
 
+        /* --- INPUTS --- */
         input, select {
             padding: 15px; border-radius: 12px; border: var(--glass-border);
             background: rgba(0, 0, 0, 0.3); color: white; font-size: 18px; text-align: center;
-            outline: none; width: 250px; margin: 10px 0;
+            outline: none; width: 250px; transition: 0.3s; margin: 10px 0;
         }
+        input:focus, select:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.5); box-shadow: 0 0 15px rgba(187, 134, 252, 0.3); }
 
+        /* --- LAYOUT & CARTES --- */
         .screen { display: none; padding: 20px; width: 100%; min-height: 100vh; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.5s ease; }
-        .screen.active { display: flex; opacity: 1; }
+        .screen.active { display: flex; animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.95) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 
         .card {
-            background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             padding: 40px; border-radius: 24px; border: var(--glass-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); width: 90%; max-width: 500px; margin-bottom: 20px;
         }
 
-        .room-item { background: rgba(255,255,255,0.05); margin: 12px 0; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: var(--glass-border); }
+        .room-item { 
+            background: rgba(255,255,255,0.05); margin: 12px 0; padding: 15px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center; border: var(--glass-border); transition: 0.3s;
+        }
+        .room-item:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
         .room-info { text-align: left; }
         .room-players-list { font-size: 13px; color: #aaa; margin-top: 4px; }
 
         .settings-box { text-align: left; width: 100%; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; box-sizing: border-box; }
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
+        /* --- JEU --- */
         .game-header {
             display: flex; justify-content: space-between; width: 100%; padding: 20px;
             background: rgba(20, 20, 30, 0.9); backdrop-filter: blur(15px);
@@ -77,18 +98,27 @@
         }
         .game-content { margin-top: 110px; width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 140px; }
 
-        .player-card { width: 100px; margin: 15px; position: relative; transition: 0.4s; }
-        .avatar { width: 80px; height: 80px; border-radius: 50%; background: #222; margin: auto; border: 3px solid transparent; overflow: hidden; }
+        .player-card { width: 100px; margin: 15px; position: relative; transition: 0.4s; animation: popIn 0.5s backwards; }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .avatar { 
+            width: 80px; height: 80px; border-radius: 50%; background: #222; margin: auto; 
+            border: 3px solid transparent; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: 0.3s;
+        }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .bubble { background: rgba(255,255,255,0.9); color: #222; padding: 6px 12px; border-radius: 15px; font-size: 13px; margin-top: 8px; font-weight: bold; min-height: 22px; }
+        .bubble { 
+            background: rgba(255,255,255,0.9); color: #222; padding: 6px 12px; border-radius: 15px; 
+            font-size: 13px; margin-top: 8px; font-weight: bold; min-height: 22px; box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
         .actif .avatar { border-color: var(--accent); transform: scale(1.15); box-shadow: 0 0 25px var(--accent); }
         .mort { opacity: 0.4; filter: grayscale(100%) brightness(0.5); transform: scale(0.9); }
 
-        #timer-bar { height: 5px; background: linear-gradient(90deg, #ff416c, #ff4b2b); width: 0%; position: fixed; top: 90px; left:0; z-index: 11; }
+        #timer-bar { height: 5px; background: linear-gradient(90deg, #ff416c, #ff4b2b); width: 0%; position: fixed; top: 90px; left:0; z-index: 11; box-shadow: 0 0 15px rgba(255, 65, 108, 0.6); }
 
         #history-box {
             width: 90%; max-width: 400px; height: 150px; background: rgba(0,0,0,0.4); border: var(--glass-border);
             border-radius: 15px; margin-top: 20px; overflow-y: auto; text-align: left; padding: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         .history-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 8px 0; font-size: 14px; color: #ddd; }
         .history-item b { color: var(--accent); }
@@ -100,46 +130,38 @@
             box-sizing: border-box; border-radius: 25px 25px 0 0; z-index: 20;
         }
 
-        #toast-container {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px;
-        }
+        /* --- NOTIFICATIONS & MODALES --- */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; }
         .toast {
-            background: rgba(30, 30, 30, 0.95); color: white; padding: 15px 20px;
-            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-left: 5px solid var(--accent); animation: slideIn 0.4s ease; font-weight: 600;
+            background: rgba(30, 30, 30, 0.95); color: white; padding: 15px 20px; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-left: 5px solid var(--accent);
+            backdrop-filter: blur(5px); animation: slideIn 0.4s ease; font-weight: 600;
         }
+        .toast.error { border-left-color: var(--danger); } .toast.success { border-left-color: var(--success); }
         @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        #modal-overlay {
+        #modal-overlay, #modal-secrets {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
             display: none; align-items: center; justify-content: center; z-index: 4000;
         }
-        .modal-box {
+        .modal-box, .secret-content {
             background: #1e1e1e; padding: 40px; border-radius: 25px; text-align: center; border: 1px solid #444; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.8); max-width: 90%; width: 400px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); max-width: 90%; width: 400px; animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        /* MODAL SECRETS */
-        #modal-secrets {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 5000; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        .secret-content {
-            background: #1a1a2e; padding: 20px; border-radius: 20px; border: 1px solid var(--accent);
-            max-width: 90%; width: 400px; max-height: 80vh; overflow-y: auto;
-        }
+        .secret-content { max-height: 80vh; overflow-y: auto; }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         #modal-white { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 5000; color: white; }
 
-        .victory-text { color: var(--success); font-size: 2.5rem; margin: 10px 0; text-shadow: 0 0 20px rgba(0, 230, 118, 0.4); }
-        .defeat-text { color: var(--danger); font-size: 2.5rem; margin: 10px 0; text-shadow: 0 0 20px rgba(255, 82, 82, 0.4); }
+        .victory-text { color: var(--success); font-size: 2.5rem; margin: 10px 0; text-shadow: 0 0 20px rgba(0, 230, 118, 0.4); letter-spacing: 2px; }
+        .defeat-text { color: var(--danger); font-size: 2.5rem; margin: 10px 0; text-shadow: 0 0 20px rgba(255, 82, 82, 0.4); letter-spacing: 2px; }
+        .words-reveal { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin: 20px 0; border: var(--glass-border); }
         .word-tag { padding: 5px 10px; border-radius: 8px; font-weight: bold; margin: 0 5px; display: inline-block; }
         .tag-civil { background: rgba(0, 230, 118, 0.15); color: var(--success); border: 1px solid rgba(0, 230, 118, 0.3); }
         .tag-imposter { background: rgba(255, 82, 82, 0.15); color: var(--danger); border: 1px solid rgba(255, 82, 82, 0.3); }
-        .role-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; margin-left: 8px; text-transform: uppercase; font-weight: 800; }
+        .final-row { background: rgba(255,255,255,0.05); border: var(--glass-border); padding: 12px; margin-bottom: 8px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+        .role-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; margin-left: 8px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
         .badge-Civil { background: #2e7d32; color: white; }
         .badge-Undercover { background: #c62828; color: white; }
         .badge-Mr { background: #1565c0; color: white; }
@@ -174,12 +196,15 @@
 
     <div id="screen-home" class="screen active">
         <div class="card">
-            <h1 style="font-size: 4rem; margin-bottom: 0;">🕵️</h1>
+            <h1 style="font-size: 4rem; margin-bottom: 0; text-shadow: 0 5px 15px rgba(0,0,0,0.3);">🕵️</h1>
             <h1 style="margin-top: 0; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">UNDERCOVER</h1>
+            <p style="color: #aaa; margin-bottom: 30px;">Infiltrez-vous, mentez, survivez.</p>
             <input type="text" id="pseudo" placeholder="Votre Pseudo" />
             <br><br>
-            <button class="btn-blue" onclick="showCreate()">Créer une partie</button>
-            <button class="btn-green" onclick="showBrowser()">Rejoindre</button>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-blue" onclick="showCreate()">Créer une partie</button>
+                <button class="btn-green" onclick="showBrowser()">Rejoindre</button>
+            </div>
         </div>
     </div>
 
@@ -194,7 +219,8 @@
 
     <div id="screen-lobby" class="screen">
         <div class="card">
-            <h2>Salle : <span id="room-code-display" style="color: var(--accent);"></span></h2>
+            <h2>Salle : <span id="room-code-display" style="color: var(--accent); font-family: monospace; font-size: 1.5rem;"></span></h2>
+            
             <div class="settings-box">
                 <div class="setting-row">
                     <span>📚 Univers</span>
@@ -211,12 +237,14 @@
                 <div class="setting-row"><span>⏱️ Parole (s)</span> <input type="number" id="opt-time-word" style="width: 60px;" onchange="updateSettings()" disabled></div>
                 <div class="setting-row"><span>⏳ Vote (s)</span> <input type="number" id="opt-time-vote" style="width: 60px;" onchange="updateSettings()" disabled></div>
             </div>
-            <div id="lobby-players" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px;"></div>
+            
+            <h3 style="margin-bottom: 5px;">Joueurs</h3>
+            <div id="lobby-players" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
             <br>
             <div id="host-controls" style="display: none;">
-                <button class="btn-green" onclick="lancerPartie()" style="width: 100%;">LANCER</button>
+                <button class="btn-green" onclick="lancerPartie()" style="width: 100%; font-size: 1.2rem;">LANCER LA PARTIE</button>
             </div>
-            <div id="guest-msg" style="color: #aaa;">En attente de l'hôte...</div>
+            <div id="guest-msg" style="color: #aaa; font-style: italic;">En attente de l'hôte...</div>
             <br>
             <button class="btn-red" onclick="quitRoom()">Quitter</button>
         </div>
@@ -225,18 +253,18 @@
     <div id="screen-game" class="screen" style="justify-content: flex-start;">
         <div class="game-header">
             <div style="text-align: left;">
-                <span id="my-role" style="font-weight: bold; color: #888;">Rôle caché</span><br>
-                <span id="my-word" style="color: var(--accent); font-weight: 800; font-size: 1.4rem;">???</span>
+                <span id="my-role" style="font-weight: bold; color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Rôle caché</span><br>
+                <span id="my-word" style="color: var(--accent); font-weight: 800; font-size: 1.4rem; text-shadow: 0 0 10px rgba(187, 134, 252, 0.3);">???</span>
             </div>
             <div style="font-size: 28px; font-weight: bold; color: white;" id="timer-display">--</div>
         </div>
         <div id="timer-bar"></div>
         <div class="game-content">
             <div id="game-plateau" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
-            <div id="history-box"><div style="color: #666; text-align: center; padding-top: 50px;">L'historique s'affichera ici...</div></div>
+            <div id="history-box"><div style="color: #666; text-align: center; padding-top: 50px; font-style: italic;">L'historique s'affichera ici...</div></div>
         </div>
         <div id="controls" style="display: none;">
-            <h3 id="instruction" style="margin-top: 0; color: var(--accent);">...</h3>
+            <h3 id="instruction" style="margin-top: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">...</h3>
             
             <button id="btn-reveal" class="btn-purple" style="display: none; width: 100%; margin-bottom: 10px;" onclick="askRevelation()">👁️ Voir les rôles</button>
 
@@ -254,9 +282,14 @@
         <div class="card">
             <div id="end-header"><div id="result-title" class="victory-text">VICTOIRE</div></div>
             <div class="words-reveal">
-                <span class="word-tag tag-civil" id="end-mot-civil">Civil</span>
-                <span class="word-tag tag-imposter" id="end-mot-under">Imposteur</span>
+                <div style="margin-bottom: 5px; color: #aaa; font-size: 0.9rem;">LES MOTS ÉTAIENT</div>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <span class="word-tag tag-civil" id="end-mot-civil">Civil</span>
+                    <span style="color: #555;">vs</span>
+                    <span class="word-tag tag-imposter" id="end-mot-under">Imposteur</span>
+                </div>
             </div>
+            <h3>Bilan</h3>
             <div id="final-list" style="width: 100%; max-height: 250px; overflow-y: auto;"></div>
             <br>
             <button class="btn-blue" onclick="backToLobby()" style="width: 100%;">Retour au Salon</button>
@@ -264,9 +297,9 @@
     </div>
 
     <div id="modal-white">
-        <div class="card" style="border: 2px solid var(--accent);">
+        <div class="card" style="border: 2px solid var(--accent); box-shadow: 0 0 50px var(--accent);">
             <h1 style="color: #f1c40f; margin-top:0;">🎩 DERNIÈRE CHANCE</h1>
-            <p>Tu es Mr. White. Devine le mot !</p>
+            <p>Tu es Mr. White. Devine le mot pour voler la victoire !</p>
             <input type="text" id="white-input" placeholder="Mot des civils..." style="font-size: 22px; width: 80%;" />
             <br><br>
             <button class="btn-red" onclick="guessWhite()" style="width: 80%;">TENTER</button>
@@ -275,17 +308,21 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io({ reconnection: true });
+        const socket = io({ reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000 });
+
+        socket.on("connect", () => { console.log("Connecté ! ID: " + socket.id); });
+        socket.on("disconnect", (reason) => { if (reason === "io server disconnect") socket.connect(); });
+
         let myId = "", isHost = false, myRole = "";
 
-        // --- SYSTÈME DE NOTIFICATION ---
+        // --- UI NOTIFS ---
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 4000);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 300); }, 4000);
         }
         function showModal(title, message) {
             document.getElementById('modal-title').innerText = title;
@@ -294,10 +331,8 @@
         }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        // --- FONCTIONS SECRETS ---
-        function askRevelation() {
-            socket.emit('demande_revelation');
-        }
+        // --- SECRETS ---
+        function askRevelation() { socket.emit('demande_revelation'); }
         socket.on('revelation_data', (data) => {
             document.getElementById('sec-civil').innerText = data.motCivil;
             document.getElementById('sec-under').innerText = data.motUndercover;
@@ -305,9 +340,8 @@
             list.innerHTML = "";
             data.joueurs.forEach(p => {
                 const row = document.createElement('div');
-                row.style.padding = "5px 0";
-                row.style.borderBottom = "1px solid #333";
-                let color = "#00e676"; // Civil
+                row.className = "final-row";
+                let color = "#00e676"; 
                 if(p.role === 'Undercover') color = "#ff5252";
                 if(p.role === 'Mr. White') color = "#448aff";
                 row.innerHTML = `<span style="color:${color}; font-weight:bold;">${p.role}</span> : ${p.pseudo} ${p.vivant ? '' : '💀'}`;
@@ -323,9 +357,10 @@
         });
 
         function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); });
+            document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.opacity = 0; });
             const target = document.getElementById(id);
             target.classList.add('active');
+            setTimeout(() => target.style.opacity = 1, 50);
         }
         function goHome() { showScreen('screen-home'); }
         function showCreate() {
@@ -345,23 +380,21 @@
             }
         }
 
-        // --- SOCKET ---
+        // --- GAME LOGIC ---
         socket.on('connect', () => { myId = socket.id; });
         socket.on('info', msg => showToast(msg, 'info'));
         socket.on('erreur', msg => showToast(msg, 'error'));
         
         socket.on('joueur_elimine', data => {
             showModal("Élimination", `<b>${data.pseudo}</b> a été éliminé.<br>Il était : <b style="color:${data.role === 'Civil' ? '#00e676' : '#ff5252'}">${data.role}</b>`);
-            
-            // Si c'est moi qui suis éliminé, j'affiche le bouton pour voir les secrets
-            if(document.getElementById('pseudo').value === data.pseudo) {
-                document.getElementById('btn-reveal').style.display = 'block';
-            }
+            const monPseudo = document.getElementById('pseudo').value;
+            if(monPseudo === data.pseudo) document.getElementById('btn-reveal').style.display = 'block';
         });
 
         socket.on('update_room_list', (rooms) => {
             const list = document.getElementById('room-list');
             list.innerHTML = "";
+            if(rooms.length === 0) list.innerHTML = "<p style='color:#777;'>Aucune partie en attente.</p>";
             rooms.forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'room-item';
@@ -435,9 +468,7 @@
         socket.on('debut_jeu', (data) => {
             showScreen('screen-game');
             document.getElementById('history-box').innerHTML = '<div style="color: #555; text-align: center; padding-top: 60px; font-style: italic;">L\'historique s\'affichera ici...</div>';
-            // Reset du bouton révélation
             document.getElementById('btn-reveal').style.display = 'none';
-            
             myRole = data.role;
             if (data.role === 'Mr. White') {
                 document.getElementById('my-role').innerText = "Tu es : Mr. White 🎩";
